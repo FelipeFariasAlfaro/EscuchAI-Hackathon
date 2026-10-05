@@ -49,6 +49,16 @@ async function ensureOffscreen() {
 
 /* ---------------- Mensajes del side panel ---------------- */
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+  // El offscreen avisa que su listener ya está activo: ahora sí es seguro
+  // enviarle la orden de captura guardada.
+  if (msg.target === "background" && msg.type === "offscreen-ready") {
+    if (pendingStart) {
+      chrome.runtime.sendMessage(pendingStart).catch(() => {});
+      pendingStart = null;
+    }
+    return;
+  }
+
   if (msg.target !== "background") return;
 
   if (msg.type === "start-recording") {
@@ -65,6 +75,9 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
 });
 
+// Guarda la orden de inicio hasta que el offscreen avise que está listo.
+let pendingStart = null;
+
 async function startRecording(tabId, lang) {
   // El streamId caduca en pocos segundos: se pide justo antes de consumirlo.
   const streamId = await new Promise((resolve, reject) => {
@@ -78,18 +91,12 @@ async function startRecording(tabId, lang) {
     });
   });
 
+  // Handshake: el offscreen registra su listener al cargar y recién entonces
+  // envía "offscreen-ready". Si mandamos start-capture antes, el mensaje se
+  // pierde (el listener aún no existe) y la captura nunca arranca aunque el
+  // modelo sí cargue. Guardamos la orden y la disparamos al recibir el ready.
+  pendingStart = { target: "offscreen", type: "start-capture", streamId, lang: lang || "es" };
   await ensureOffscreen();
-
-  const resp = await chrome.runtime.sendMessage({
-    target: "offscreen",
-    type: "start-capture",
-    streamId,
-    lang: lang || "es",
-  });
-  if (!resp || !resp.ok) {
-    await stopRecording(tabId);
-    throw new Error(resp?.error || "El documento offscreen no pudo iniciar la captura.");
-  }
 
   // Pedir al content script de Meet que empiece a reportar quién habla.
   if (tabId) {

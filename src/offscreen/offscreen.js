@@ -48,7 +48,12 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === "start-capture") {
     startCapture(msg.streamId, msg.lang).then(
       () => sendResponse({ ok: true }),
-      (err) => sendResponse({ ok: false, error: err.message })
+      (err) => {
+        // El SW ya no espera esta respuesta (handshake asíncrono): avisar al
+        // panel para que el error sea visible.
+        sendStatus(`No se pudo iniciar la captura: ${err.message}`);
+        sendResponse({ ok: false, error: err.message });
+      }
     );
     return true; // respuesta asíncrona
   }
@@ -57,6 +62,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     sendResponse({ ok: true });
   }
 });
+
+// Avisar al service worker de que el listener ya está activo. El SW espera este
+// mensaje antes de enviar start-capture (si no, el mensaje se perdería).
+chrome.runtime.sendMessage({ target: "background", type: "offscreen-ready" }).catch(() => {});
 
 function sendStatus(text) {
   chrome.runtime.sendMessage({ target: "sidepanel", type: "status", text });
