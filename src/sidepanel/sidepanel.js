@@ -72,5 +72,7 @@ recBtn.addEventListener("click", () => {
 });
 
 /* ---------------- Render de las tabs con contenido dinámico ---------------- */
-renderSettings(document.getElementById("settingsRoot"), { showModal });
+renderSettings(document.getElementById("settingsRoot"), { showModal }).catch((err) =>
+  console.error("Error al renderizar Ajustes:", err)
+);
 renderAbout(document.getElementById("aboutRoot"));
