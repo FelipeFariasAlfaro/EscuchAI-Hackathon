@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EscuchAI · PRD</title>
+<style>
+  :root { --bg:#0f1420; --card:#171e2e; --line:#2a3550; --text:#e6ebf5; --muted:#9aa7c2; --accent:#39c0c8; --accent2:#4f9cff; --rec:#e5484d; --ok:#2fbf71; --warn:#e0a83a; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  main { max-width:940px; margin:0 auto; padding:32px 20px 64px; }
+  h1 { margin:0 0 4px; font-size:2rem; }
+  h2 { margin:38px 0 12px; font-size:1.2rem; color:var(--accent); }
+  .sub { color:var(--muted); margin:0 0 8px; }
+  .badge { display:inline-block; padding:2px 10px; border-radius:999px; font-size:.78rem; font-weight:600; border:1px solid var(--line); color:var(--muted); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 20px; margin:10px 0; }
+  .card p { margin:4px 0; }
+  /* Journey */
+  .journey { counter-reset:step; margin:12px 0; }
+  .step { position:relative; background:var(--card); border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:10px; padding:12px 16px 12px 52px; margin:8px 0; }
+  .step::before { counter-increment:step; content:counter(step); position:absolute; left:14px; top:50%; transform:translateY(-50%); width:26px; height:26px; border-radius:50%; background:var(--accent); color:#06222a; font-weight:700; display:flex; align-items:center; justify-content:center; font-size:.85rem; }
+  .step.win { border-left-color:var(--ok); }
+  .step.win::before { background:var(--ok); color:#04231a; }
+  .rec { display:inline-block; background:var(--rec); color:#fff; padding:1px 8px; border-radius:5px; font-size:.82rem; font-weight:700; }
+  /* Reveals */
+  details { background:var(--card); border:1px solid var(--line); border-radius:12px; margin:10px 0; }
+  summary { cursor:pointer; padding:14px 20px; font-weight:600; list-style:none; display:flex; align-items:center; gap:10px; }
+  summary::-webkit-details-marker { display:none; }
+  summary::before { content:"▸"; color:var(--muted); transition:transform .15s; }
+  details[open] summary::before { transform:rotate(90deg); }
+  details .body { padding:0 20px 16px; }
+  details ul { margin:6px 0; padding-left:22px; }
+  details li { margin:5px 0; }
+  .crit { font-size:.9rem; color:var(--muted); }
+  .crit li::marker { content:"☐ "; }
+  .pill { font-size:.72rem; padding:2px 8px; border-radius:6px; font-weight:700; margin-left:auto; }
+  .p-core { background:rgba(57,192,200,.16); color:var(--accent); }
+  .p-def { background:rgba(224,168,58,.16); color:var(--warn); }
+  .state { display:flex; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); }
+  .state:last-child { border-bottom:0; }
+  .state b { color:var(--accent2); min-width:200px; }
+  .tag { font-size:.75rem; padding:2px 8px; border-radius:6px; font-weight:700; }
+  .t-build { background:rgba(47,191,113,.15); color:var(--ok); }
+  .t-def { background:rgba(224,168,58,.15); color:var(--warn); }
+  .t-no { background:rgba(229,72,77,.15); color:var(--rec); }
+  code { background:#0b1120; padding:1px 6px; border-radius:5px; font-size:.9em; }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>EscuchAI</h1>
+  <p class="sub">Requisitos del producto · transcribe Google Meet en vivo y pregúntale a Gemini mientras ocurre.</p>
+  <span class="badge">prd · aprobado</span>
+
+  <h2>El viaje principal</h2>
+  <div class="journey">
+    <div class="step">Estás en una reunión de Google Meet y abres el panel de EscuchAI.</div>
+    <div class="step">Ves la tab <b>Reunión</b>, el botón <b>Iniciar grabación</b> y el placeholder "La transcripción aparecerá aquí al iniciar la grabación."</div>
+    <div class="step">Pulsas Iniciar grabación → el botón pasa a <span class="rec">● Grabando</span>.</div>
+    <div class="step">Aparecen líneas en vivo, cada una con el hablante: <code>Nombre: frase</code>.</div>
+    <div class="step">Escribes una pregunta a la IA (p. ej. "resume lo que dijo Pepito sobre el sistema X") y la envías.</div>
+    <div class="step">Gemini recibe toda la transcripción disponible y responde; la respuesta se añade al chat con historial.</div>
+    <div class="step">Puedes seguir preguntando mientras la grabación sigue activa.</div>
+    <div class="step win"><b>Éxito:</b> texto en vivo con nombres + respuestas de la IA basadas en lo dicho, sin esperar. Demostrable en un minuto.</div>
+  </div>
+
+  <h2>Look and feel</h2>
+  <div class="card">
+    <p>Tema oscuro, acento turquesa/cian, botón de grabación en rojo al estar activo, tipografía sans limpia, panel vertical angosto, tab activa subrayada. Tomado del mock del usuario.</p>
+  </div>
+
+  <h2>Pantallas y comportamiento</h2>
+
+  <details open>
+    <summary>Grabación y transcripción en vivo <span class="pill p-core">núcleo</span></summary>
+    <div class="body">
+      <ul>
+        <li>Iniciar/detener con el botón superior; al grabar muestra <span class="rec">Grabando</span>.</li>
+        <li>Audio de la pestaña transcrito en tu equipo (ES e inglés).</li>
+        <li>Cada frase como <code>Nombre: frase</code>; el nombre sale del DOM de Meet (atribución aproximada).</li>
+        <li>Sin nombre disponible → <b>"Participante Indistinguible"</b>.</li>
+      </ul>
+      <ul class="crit">
+        <li>El botón cambia a rojo con "Grabando".</li>
+        <li>Aparecen líneas nuevas con <code>Nombre: frase</code>.</li>
+        <li>Respaldo "Participante Indistinguible" cuando no hay nombre.</li>
+        <li>Funciona en español e inglés.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details open>
+    <summary>Chat con la IA sobre la reunión <span class="pill p-core">núcleo</span></summary>
+    <div class="body">
+      <ul>
+        <li>Chat con <b>historial</b>: los mensajes se encadenan.</li>
+        <li>La IA recibe toda la transcripción disponible como contexto.</li>
+        <li>Se puede preguntar <b>mientras graba</b>. Proveedor: Gemini.</li>
+      </ul>
+      <ul class="crit">
+        <li>Enviar añade pregunta y respuesta sin borrar lo anterior.</li>
+        <li>La respuesta refleja contenido de la transcripción.</li>
+        <li>Se puede preguntar durante la grabación.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details>
+    <summary>Configuración de IA (Ajustes) <span class="pill p-core">núcleo</span></summary>
+    <div class="body">
+      <ul>
+        <li>Flujo: Gemini → API key → validar → cargar modelos → elegir → guardar.</li>
+        <li>Config guardada en <b>local storage</b>, persiste entre sesiones.</li>
+      </ul>
+      <ul class="crit">
+        <li>Key válida → cargan modelos → elegir y guardar.</li>
+        <li>Key inválida → <b>modal</b> de error.</li>
+        <li>Tras reabrir el navegador, la config sigue presente.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details>
+    <summary>Sub-tabs y acciones diferidas <span class="pill p-def">visible, no funcional</span></summary>
+    <div class="body">
+      <p>Tareas, Conflictos, Participación, Alertas, y los botones Resumir, Copiar, TXT, MD aparecen deshabilitados o con "Próximamente". Muestran la visión completa sin construirla.</p>
+    </div>
+  </details>
+
+  <h2>Estados y bordes</h2>
+  <div class="card">
+    <div class="state"><b>Sin configurar IA</b><span>Modal/advertencia: configura la IA en Ajustes antes de usar el chat.</span></div>
+    <div class="state"><b>Antes de grabar</b><span>Placeholder en el área de transcripción.</span></div>
+    <div class="state"><b>Fuera de Google Meet</b><span>Aviso: la función solo está disponible en Google Meet.</span></div>
+    <div class="state"><b>API key inválida</b><span>Modal de error en Ajustes.</span></div>
+    <div class="state"><b>Hablante indeterminado</b><span>Línea atribuida a "Participante Indistinguible".</span></div>
+    <div class="state"><b>Persistencia</b><span>Config de IA en local storage. Nada en la nube.</span></div>
+  </div>
+
+  <h2>Qué construimos / qué se difiere</h2>
+  <div class="card">
+    <p><span class="tag t-build">AHORA</span> Reunión + transcripción en vivo con nombres · chat con Gemini (historial, en vivo) · Ajustes con flujo completo de Gemini en local storage · estados clave · sub-tabs y botones deshabilitados visibles.</p>
+    <p><span class="tag t-def">DESPUÉS</span> Tareas · Conflictos · Participación · Alertas · Resumir/Copiar/Exportar · Historial · OpenAI/Claude/Ollama · Teams/Skype/Discord · tab Sobre (si sobra tiempo).</p>
+    <p><span class="tag t-no">NO</span> Nada en la nube · atribución de hablante perfecta · otras plataformas en esta PoC.</p>
+  </div>
+
+  <h2>Preguntas abiertas (para el spec)</h2>
+  <div class="card">
+    <p><b>Motor de transcripción local y captura del audio de la pestaña</b> — cómo se implementa se decide en <code>4-spec</code>. Es la restricción técnica clave a resolver antes de escribir código.</p>
+    <p><b>Lectura del DOM de Meet</b> para el hablante — viabilidad y selectores concretos se validan en <code>4-spec</code>.</p>
+    <p><b>Tab Sobre</b> — puede decidirse durante el build.</p>
+  </div>
+</main>
+</body>
+</html>

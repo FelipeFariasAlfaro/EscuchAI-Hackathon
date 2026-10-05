@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EscuchAI · Spec técnico</title>
+<style>
+  :root { --bg:#0f1420; --card:#171e2e; --line:#2a3550; --text:#e6ebf5; --muted:#9aa7c2; --accent:#39c0c8; --accent2:#4f9cff; --rec:#e5484d; --ok:#2fbf71; --warn:#e0a83a; --local:#2fbf71; --cloud:#e0a83a; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  main { max-width:980px; margin:0 auto; padding:32px 20px 64px; }
+  h1 { margin:0 0 4px; font-size:2rem; }
+  h2 { margin:38px 0 12px; font-size:1.2rem; color:var(--accent); }
+  .sub { color:var(--muted); margin:0 0 8px; }
+  .badge { display:inline-block; padding:2px 10px; border-radius:999px; font-size:.78rem; font-weight:600; border:1px solid var(--line); color:var(--muted); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 20px; margin:10px 0; }
+  .card p { margin:5px 0; }
+  a { color:var(--accent2); }
+  code { background:#0b1120; padding:1px 6px; border-radius:5px; font-size:.88em; }
+  /* Architecture diagram */
+  .arch { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin:14px 0; }
+  .box { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; text-align:center; font-size:.9rem; }
+  .box b { display:block; margin-bottom:3px; }
+  .box small { color:var(--muted); }
+  .box.local { border-color:var(--local); }
+  .box.cloud { border-color:var(--cloud); }
+  .box.ui { border-color:var(--accent); }
+  .span3 { grid-column:1 / -1; }
+  .legend { font-size:.85rem; color:var(--muted); margin-top:6px; }
+  .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin:0 4px 0 12px; vertical-align:middle; }
+  /* Flow stepper */
+  .flow { counter-reset:s; margin:12px 0; }
+  .fstep { position:relative; background:var(--card); border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:10px; padding:11px 16px 11px 50px; margin:7px 0; font-size:.95rem; }
+  .fstep::before { counter-increment:s; content:counter(s); position:absolute; left:13px; top:50%; transform:translateY(-50%); width:25px; height:25px; border-radius:50%; background:var(--accent); color:#06222a; font-weight:700; display:flex; align-items:center; justify-content:center; font-size:.82rem; }
+  .fstep.win { border-left-color:var(--ok); } .fstep.win::before { background:var(--ok); color:#04231a; }
+  .rec { display:inline-block; background:var(--rec); color:#fff; padding:1px 7px; border-radius:5px; font-size:.8rem; font-weight:700; }
+  /* Reveals */
+  details { background:var(--card); border:1px solid var(--line); border-radius:12px; margin:9px 0; }
+  summary { cursor:pointer; padding:13px 20px; font-weight:600; list-style:none; display:flex; align-items:center; gap:10px; }
+  summary::-webkit-details-marker { display:none; }
+  summary::before { content:"▸"; color:var(--muted); transition:transform .15s; }
+  details[open] summary::before { transform:rotate(90deg); }
+  details .body { padding:0 20px 16px; }
+  details ul { margin:6px 0; padding-left:22px; } details li { margin:5px 0; }
+  .ref { font-size:.8rem; color:var(--muted); }
+  pre { background:#0b1120; border:1px solid var(--line); border-radius:10px; padding:14px; overflow:auto; font-size:.82rem; line-height:1.4; }
+  .warnbox { border-left:3px solid var(--warn); }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>EscuchAI</h1>
+  <p class="sub">Spec técnico · extensión Chrome MV3, Whisper local + Gemini, side panel.</p>
+  <span class="badge">spec · aprobado</span>
+
+  <h2>Cómo funciona, en simple</h2>
+  <div class="card">
+    <p>Extensión de Chrome (MV3) en el <b>side panel</b>. En una pestaña de Meet, al pulsar Grabar toma el audio de la pestaña y lo transcribe <b>en tu equipo</b> con Whisper. Cada bloque de texto se manda a <b>Gemini solo para pulirlo</b> y se muestra como <code>Nombre: frase</code>. Abajo, un chat le pregunta a Gemini sobre lo dicho. El audio nunca sale del equipo; a Gemini solo viaja texto.</p>
+  </div>
+
+  <h2>Arquitectura (4 piezas de MV3)</h2>
+  <div class="arch" role="img" aria-label="Diagrama: side panel, service worker, offscreen con Whisper, content script en Meet, y Gemini en la nube">
+    <div class="box ui span3"><b>Side Panel (UI)</b><small>tabs, transcripción, chat — tu mock</small></div>
+    <div class="box"><b>Service Worker</b><small>coordina · tabCapture · routing</small></div>
+    <div class="box local"><b>Offscreen + Whisper</b><small>audio → texto crudo (local)</small></div>
+    <div class="box local"><b>Content Script</b><small>DOM de Meet → hablante</small></div>
+    <div class="box cloud span3"><b>Gemini API</b><small>pulir cada bloque · responder el chat · validar key / listar modelos — solo texto</small></div>
+  </div>
+  <p class="legend"><span class="dot" style="background:var(--local)"></span>Local (nada sale) <span class="dot" style="background:var(--cloud)"></span>Sale a Gemini (solo texto) <span class="dot" style="background:var(--accent)"></span>UI</p>
+
+  <h2>El viaje por el sistema</h2>
+  <div class="flow">
+    <div class="fstep">Abres el side panel en Meet; se consulta si hay IA configurada.</div>
+    <div class="fstep">Pulsas Grabar → sin IA: modal "configura la IA"; fuera de Meet: aviso "solo en Google Meet".</div>
+    <div class="fstep">El service worker toma el audio con <code>chrome.tabCapture</code> y lo pasa al offscreen.</div>
+    <div class="fstep">Whisper corta el audio en bloques → texto crudo.</div>
+    <div class="fstep">El texto crudo va a Gemini <code>generateContent</code> → texto pulido.</div>
+    <div class="fstep">El content script reporta quién hablaba; sin dato → "Participante Indistinguible".</div>
+    <div class="fstep">El panel muestra <code>Nombre: frase</code>; el botón en <span class="rec">● Grabando</span>.</div>
+    <div class="fstep">Preguntas en el chat → Gemini + transcripción completa → respuesta añadida (con historial).</div>
+    <div class="fstep win"><b>Éxito:</b> líneas en vivo con nombre + respuestas de IA sobre lo dicho.</div>
+  </div>
+
+  <h2>Stack</h2>
+  <div class="card">
+    <p>Chrome Extension <b>Manifest V3</b> (JS, sin framework de UI).</p>
+    <p><code>chrome.tabCapture</code> (audio) · <code>chrome.offscreen</code> (Whisper) · <code>chrome.sidePanel</code> (UI) · <code>chrome.storage.local</code> (config).</p>
+    <p><b>transformers.js</b> + Whisper (WebGPU, fallback WASM) — <a href="https://huggingface.co/docs/transformers.js/guides/webgpu">docs</a>, <a href="https://github.com/xenova/whisper-web">whisper-web</a>.</p>
+    <p><b>Gemini API</b> v1beta REST — <a href="https://ai.google.dev/api/models">models</a>, <a href="https://ai.google.dev/gemini-api/docs">docs</a>.</p>
+    <p class="ref">Sin verificar en vivo: versión exacta de transformers.js y el modelo Whisper óptimo (latencia/calidad); se confirma temprano en el build.</p>
+  </div>
+
+  <h2>Componentes</h2>
+  <details><summary>Side Panel UI</summary><div class="body"><p>Tabs y sub-tabs del mock; acciones y sub-tabs no-núcleo deshabilitadas ("Próximamente").</p><p class="ref">prd.md &gt; Screens and Layout · Grabación · Chat</p></div></details>
+  <details><summary>Service Worker (coordinador)</summary><div class="body"><p>Valida Meet + IA, lanza tabCapture, crea offscreen, enruta mensajes.</p><p class="ref">prd.md &gt; Grabación · States and Boundaries</p></div></details>
+  <details><summary>Offscreen Document (Whisper)</summary><div class="body"><p>Recibe audio, lo corta en bloques, corre Whisper → texto crudo. Carga el modelo una vez (caché).</p><p class="ref">prd.md &gt; Grabación</p></div></details>
+  <details><summary>Content Script (hablante en Meet)</summary><div class="body"><p>Lee el DOM de Meet para el participante activo. Mejor esfuerzo; fallback "Participante Indistinguible".</p><p class="ref">prd.md &gt; Grabación (nombre por línea)</p></div></details>
+  <details><summary>Gemini Client</summary><div class="body"><p>Pulir bloques, responder el chat, validar key y listar modelos.</p><p class="ref">prd.md &gt; Chat · Configuración de IA</p></div></details>
+
+  <h2>Datos</h2>
+  <div class="card">
+    <p>Persistente en <code>chrome.storage.local</code> (nunca en la nube):</p>
+    <pre>aiConfig = { provider:"gemini", apiKey:"…", model:"…" }</pre>
+    <p>En memoria durante la sesión (no se persisten transcripciones en la PoC):</p>
+    <pre>transcript  = [ { speaker, text, ts } ]
+chatHistory = [ { role, text } ]</pre>
+  </div>
+
+  <h2>Estructura de archivos</h2>
+  <pre>escuchai-2/
+├── manifest.json
+├── src/
+│   ├── sidepanel/   sidepanel.html · .css · .js
+│   ├── background/  service-worker.js
+│   ├── offscreen/   offscreen.html · offscreen.js  (Whisper)
+│   ├── content/     meet-speaker.js
+│   └── lib/         gemini.js · storage.js
+├── vendor/          transformers.min.js
+├── assets/          icon.png
+├── devpost/
+└── README.md</pre>
+
+  <h2>Servicios externos</h2>
+  <div class="card">
+    <p><b>Gemini — validar/listar:</b> <code>GET /v1beta/models</code>, header <code>x-goog-api-key</code>. OK ⇒ key válida; 400/403 ⇒ modal de error.</p>
+    <p><b>Gemini — pulir/chat:</b> <code>POST /v1beta/models/&lt;model&gt;:generateContent</code>. Plan gratuito con límites por minuto; el pulido por bloque puede acercarse a ellos.</p>
+    <p><b>transformers.js:</b> cliente, sin servicio. Descarga el modelo (cientos de MB) la primera vez, luego caché.</p>
+  </div>
+
+  <h2>Dónde falla y qué se ve</h2>
+  <div class="card warnbox">
+    <p><b>DOM de Meet cambia</b> → "Participante Indistinguible". Validar temprano.</p>
+    <p><b>Gemini lento / rate-limited al pulir</b> → estado "puliendo…"; si falla, mostrar texto crudo de Whisper.</p>
+    <p><b>Whisper tarda en cargar</b> → estado "cargando modelo…".</p>
+    <p><b>Key inválida</b> → modal. <b>Sin WebGPU</b> → fallback WASM (más lento).</p>
+  </div>
+
+  <h2>Qué se simplificó</h2>
+  <div class="card">
+    <p>Sin persistencia de transcripciones (en memoria) · solo Gemini y solo Meet · UI sin framework.</p>
+  </div>
+
+  <h2>Decisiones e incertidumbre a validar</h2>
+  <div class="card">
+    <p><b>Decisiones:</b> Whisper local + pulido con Gemini por bloque · IA obligatoria para grabar · hablante por DOM (mejor esfuerzo) · 4 piezas.</p>
+    <p><b>Incertidumbre genuina (tu objetivo de aprendizaje):</b> si Whisper-WASM + pulido de Gemini da un "en vivo" aceptable. <b>Se mide</b> en el primer paso del build (latencia end-to-end de un bloque). Plan B: <code>whisper-tiny</code>, bloques más cortos, o pulido bajo demanda.</p>
+    <p><b>Abierto:</b> selectores reales del DOM de Meet · modelo Whisper concreto. (Tab Sobre: confirmada en la PoC.)</p>
+  </div>
+</main>
+</body>
+</html>

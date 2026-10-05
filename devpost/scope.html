@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EscuchAI · Scope</title>
+<style>
+  :root { --bg:#0f1420; --card:#171e2e; --line:#2a3550; --text:#e6ebf5; --muted:#9aa7c2; --accent:#4f9cff; --now:#2fbf71; --later:#e0a83a; --cut:#e5484d; --rec:#e5484d; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:920px; margin:0 auto; padding:32px 20px 64px; }
+  h1 { margin:0 0 4px; font-size:2rem; }
+  h2 { margin:40px 0 12px; font-size:1.2rem; color:var(--accent); }
+  .sub { color:var(--muted); margin:0 0 8px; }
+  .badge { display:inline-block; padding:2px 10px; border-radius:999px; font-size:.78rem; font-weight:600; border:1px solid var(--line); color:var(--muted); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 20px; margin:10px 0; }
+  .card p { margin:4px 0; }
+  .quote { border-left:3px solid var(--accent); padding-left:12px; color:var(--muted); font-style:italic; }
+  /* Diagram */
+  .flow { display:flex; align-items:stretch; gap:8px; flex-wrap:wrap; margin:12px 0; }
+  .node { flex:1 1 150px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; text-align:center; font-size:.92rem; }
+  .node b { display:block; margin-bottom:4px; }
+  .node.local { border-color:var(--now); }
+  .node.cloud { border-color:var(--later); }
+  .arrow { align-self:center; color:var(--muted); font-size:1.4rem; }
+  .legend { font-size:.85rem; color:var(--muted); }
+  .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin:0 4px 0 10px; vertical-align:middle; }
+  /* Reveals */
+  details { background:var(--card); border:1px solid var(--line); border-radius:12px; margin:10px 0; padding:0; }
+  summary { cursor:pointer; padding:14px 20px; font-weight:600; list-style:none; display:flex; align-items:center; gap:10px; }
+  summary::-webkit-details-marker { display:none; }
+  summary::before { content:"▸"; color:var(--muted); transition:transform .15s; }
+  details[open] summary::before { transform:rotate(90deg); }
+  details ul { margin:0; padding:0 20px 16px 42px; }
+  details li { margin:5px 0; }
+  .tag { font-size:.75rem; padding:2px 8px; border-radius:6px; font-weight:700; }
+  .t-now { background:rgba(47,191,113,.15); color:var(--now); }
+  .t-later { background:rgba(224,168,58,.15); color:var(--later); }
+  .t-cut { background:rgba(229,72,77,.15); color:var(--cut); }
+  .confirm { color:var(--later); font-weight:600; }
+  .rec { display:inline-block; background:var(--rec); color:#fff; padding:2px 10px; border-radius:6px; font-size:.85rem; font-weight:700; }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>EscuchAI</h1>
+  <p class="sub">Extensión de Chrome que transcribe una reunión en vivo y te deja preguntarle a una IA mientras ocurre.</p>
+  <span class="badge">scope · aprobado</span>
+
+  <h2>El núcleo (kernel)</h2>
+  <div class="card">
+    <p>La sección de <b>Transcripción</b>: texto de la reunión en vivo, con el menor retraso posible, sobre el que puedes <b>interactuar con la IA en tiempo real</b>, sin esperar a una transcripción que llega tarde.</p>
+  </div>
+
+  <h2>Para quién</h2>
+  <div class="card">
+    <p>Para el propio autor, en reuniones de trabajo y estudio. Suelen ser en español; para el hackathon, también en inglés.</p>
+    <p class="quote">"Las transcripciones llegan muy tarde y no puedo interactuar con el conocimiento generado en la reunión mientras ocurre."</p>
+  </div>
+
+  <h2>Bucle principal y prueba de éxito</h2>
+  <div class="flow" role="img" aria-label="Flujo: reunión en Google Meet, audio de la pestaña, transcripción local, panel lateral, pregunta a Gemini, respuesta">
+    <div class="node"><b>Google Meet</b>Audio de la pestaña</div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="node local"><b>Transcripción</b>En tu equipo (ES / EN)</div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="node local"><b>Panel lateral</b><span class="rec">Grabando</span><br>texto en vivo</div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="node cloud"><b>Chat con Gemini</b>Solo el texto sale del equipo</div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="node"><b>Respuesta</b>Basada en lo dicho</div>
+  </div>
+  <p class="legend"><span class="dot" style="background:var(--now)"></span>Local <span class="dot" style="background:var(--later)"></span>Sale a un proveedor de IA (solo texto)</p>
+  <div class="card">
+    <p><b>La demo de un minuto:</b> abres la vista de Transcripción en una reunión de Google Meet, grabas una interacción básica, ves el texto aparecer en vivo y le haces preguntas a Gemini sobre lo que se dijo.</p>
+  </div>
+
+  <h2>Privacidad</h2>
+  <div class="card">
+    <p>El audio y la transcripción se procesan en tu equipo. Todo se guarda solo localmente en el navegador: sin bases de datos ni drives externos. Lo único que sale es el texto que se envía a la IA que elijas.</p>
+  </div>
+
+  <h2>Límite de la prueba de concepto</h2>
+
+  <details open>
+    <summary><span class="tag t-now">AHORA</span> Dentro de la prueba de concepto</summary>
+    <ul>
+      <li>Solo Google Meet.</li>
+      <li>Botón Grabar / <span class="rec">Grabando</span> y transcripción en vivo (español e inglés).</li>
+      <li>Chat con la IA sobre la reunión, con Gemini.</li>
+      <li>Configuración mínima de Gemini: API key, validar, elegir modelo, guardar.</li>
+      <li class="confirm">Identificar quién habla leyendo el DOM de Meet: pendiente, se resuelve en el PRD y el spec según la viabilidad técnica.</li>
+    </ul>
+  </details>
+
+  <details>
+    <summary><span class="tag t-later">DESPUÉS</span> Vale la pena, pero no ahora</summary>
+    <ul>
+      <li>Sub-tabs Tareas, Conflictos, Participación (% por participante) y Alertas (palabras configurables, quién y en qué minuto).</li>
+      <li>Resumen, copiar y exportar TXT / MD.</li>
+      <li>Tab Historial: buscar por título o fecha, modal al abrir, borrar con confirmación.</li>
+      <li>Proveedores OpenAI, Claude y Ollama (local).</li>
+      <li>Tab Mis datos: icono, título, versión, nombre, email, LinkedIn, GitHub y repositorio.</li>
+      <li>Teams, Skype y Discord.</li>
+    </ul>
+  </details>
+
+  <details>
+    <summary><span class="tag t-cut">FUERA</span> Recortado explícitamente</summary>
+    <ul>
+      <li>Nada por ahora. Todo lo mencionado queda en "Después".</li>
+    </ul>
+  </details>
+</main>
+</body>
+</html>

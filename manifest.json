@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "EscuchAI",
+  "version": "0.1.0",
+  "description": "Transcribe reuniones de Google Meet en vivo y pregúntale a la IA mientras ocurren.",
+  "permissions": [
+    "sidePanel",
+    "storage",
+    "tabCapture",
+    "offscreen",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://meet.google.com/*",
+    "https://generativelanguage.googleapis.com/*"
+  ],
+  "background": {
+    "service_worker": "src/background/service-worker.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "src/sidepanel/sidepanel.html"
+  },
+  "action": {
+    "default_title": "Abrir EscuchAI"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://meet.google.com/*"],
+      "js": ["src/content/meet-speaker.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "128": "assets/icon.png"
+  }
+}

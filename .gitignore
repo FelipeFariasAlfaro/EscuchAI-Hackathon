@@ -1,0 +1,6 @@
+/devpost/learner-profile.md
+
+# Local credentials (never commit)
+.env
+.env.*
+!.env.example

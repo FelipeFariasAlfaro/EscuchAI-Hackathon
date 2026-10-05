@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EscuchAI</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <!-- Cabecera -->
+  <header class="appbar">
+    <div class="brand">
+      <span class="mic" aria-hidden="true">&#127908;</span>
+      <span class="brand-name">EscuchAI</span>
+    </div>
+    <button class="min" title="Minimizar" aria-label="Minimizar">&#8211;</button>
+  </header>
+
+  <!-- Tabs principales -->
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="reunion" role="tab">Reunión</button>
+    <button class="tab" data-tab="historial" role="tab">Historial</button>
+    <button class="tab" data-tab="ajustes" role="tab">Ajustes</button>
+    <button class="tab" data-tab="sobre" role="tab">Sobre</button>
+  </nav>
+
+  <!-- ===================== TAB REUNIÓN ===================== -->
+  <section class="panel active" data-panel="reunion">
+    <div class="rec-row">
+      <button id="recBtn" class="rec-btn">
+        <span class="rec-dot" aria-hidden="true"></span>
+        <span class="rec-label">Iniciar grabación</span>
+      </button>
+    </div>
+
+    <!-- Sub-tabs -->
+    <nav class="subtabs" role="tablist">
+      <button class="subtab active" data-subtab="transcripcion" role="tab">Transcripción</button>
+      <button class="subtab disabled" data-subtab="tareas" role="tab" title="Próximamente" disabled>Tareas</button>
+      <button class="subtab disabled" data-subtab="conflictos" role="tab" title="Próximamente" disabled>Conflictos</button>
+      <button class="subtab disabled" data-subtab="participacion" role="tab" title="Próximamente" disabled>Participación</button>
+      <button class="subtab disabled" data-subtab="alertas" role="tab" title="Próximamente" disabled>Alertas</button>
+    </nav>
+
+    <!-- Área de transcripción -->
+    <div class="transcript-area" id="transcriptArea">
+      <p class="placeholder" id="transcriptPlaceholder">La transcripción aparecerá aquí al iniciar la grabación.</p>
+    </div>
+
+    <!-- Acciones (deshabilitadas en la PoC) -->
+    <div class="actions">
+      <button class="action disabled" title="Próximamente" disabled>&#9776; Resumir</button>
+      <button class="action disabled" title="Próximamente" disabled>&#128203; Copiar</button>
+      <button class="action disabled" title="Próximamente" disabled>&#11015; TXT</button>
+      <button class="action disabled" title="Próximamente" disabled>&#11015; MD</button>
+    </div>
+
+    <!-- Caja de chat -->
+    <div class="chat-box">
+      <input id="chatInput" class="chat-input" type="text"
+             placeholder="Pregunta a la IA, ej: resume lo que dijo Pepito sobre el sistema X" />
+      <button id="chatSend" class="chat-send" title="Enviar" aria-label="Enviar">&#10148;</button>
+    </div>
+  </section>
+
+  <!-- ===================== TAB HISTORIAL ===================== -->
+  <section class="panel" data-panel="historial">
+    <div class="empty-tab">
+      <p>Historial de grabaciones.</p>
+      <p class="muted">Próximamente.</p>
+    </div>
+  </section>
+
+  <!-- ===================== TAB AJUSTES ===================== -->
+  <section class="panel" data-panel="ajustes">
+    <div id="settingsRoot" class="settings"></div>
+  </section>
+
+  <!-- ===================== TAB SOBRE ===================== -->
+  <section class="panel" data-panel="sobre">
+    <div id="aboutRoot" class="about"></div>
+  </section>
+
+  <!-- Modal genérico -->
+  <div id="modalBackdrop" class="modal-backdrop hidden">
+    <div class="modal" role="dialog" aria-modal="true">
+      <p id="modalMessage"></p>
+      <div class="modal-actions">
+        <button id="modalCancel" class="btn-ghost hidden">Cancelar</button>
+        <button id="modalOk" class="btn-accent">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="sidepanel.js"></script>
+</body>
+</html>
