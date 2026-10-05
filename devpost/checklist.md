@@ -72,23 +72,23 @@ Build mode: fast
 ## Hands-on Checkpoints
 
 - [x] Early usable behavior explored — probado en Chrome real: transcripción en vivo + pulido de Gemini + chat funcionan de punta a punta. La latencia por ventana (~5s) resultó usable; no se necesitó el plan B.
-- [ ] Final kick-the-tires exploration and feedback completed
+- [x] Final kick-the-tires exploration and feedback completed — probado en Chrome real end-to-end; el usuario pidió y aprobó activar Copiar/TXT/MD/Resumir, implementadas y funcionales.
 
 ## Final Review
 
-- [ ] Final review complete — feedback resolved and learner confirms ready to ship
+- [x] Final review complete — feedback resolved and learner confirms ready to ship
 
 ## Code Tour and App Map
 
-- [ ] Learning activity complete — guided route, focused alternative, prior practice connected, or brief recap
-- [ ] Optional edit and transfer reflection addressed — offered/declined/already covered/not applicable as appropriate
-- [ ] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse
+- [x] Learning activity complete — alternativa enfocada (plan-first): trazar el fallo real de captura y la evidencia que lo resolvió.
+- [x] Optional edit and transfer reflection addressed — reflexión opcional ofrecida al cierre.
+- [x] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse
 
-Activity and evidence: [pendiente]
-Route and stops: [pendiente]
-Edit outcome: [pendiente]
-Reflection: [pendiente]
-Activity mode: [pendiente]
+Activity and evidence: Alternativa enfocada para usuario plan-first. Fallo real "Modelo listo pero no transcribe": dos causas plausibles (AudioContext suspendido vs. start-capture perdido). La evidencia que distinguió la causa fue el diff contra la v1 que funcionaba (handshake OFFSCREEN_READY). Registrado en checklist > Revisions y en el commit 5fee994.
+Route and stops: Ruta de referencia (no recorrida en vivo), verificada contra el código: sidepanel.js:startRecording → offscreen.js:startCapture/transcribeWindow + service-worker.js handshake offscreen-ready → sidepanel.js:handleRawChunk + lib/gemini.js:polishTranscript + content/meet-speaker.js.
+Edit outcome: no aplica (no se hizo edición incidental; el build ya estaba en revisión final).
+Reflection: ofrecida ("¿qué harías distinto la próxima vez que empieces con un agente?"), pendiente de respuesta del usuario; respuesta personal, si la da, va solo en el perfil ignorado.
+Activity mode: alternativa enfocada basada en evidencia; mapa preparado como ruta de referencia.
 
 ## Revisions
 

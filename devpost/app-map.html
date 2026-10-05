@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EscuchAI · Mapa de la app</title>
+<style>
+  :root { --bg:#0f1420; --card:#171e2e; --line:#2a3550; --text:#e6ebf5; --muted:#9aa7c2; --accent:#39c0c8; --rec:#e5484d; --ok:#2fbf71; --cloud:#e0a83a; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  main { max-width:900px; margin:0 auto; padding:30px 20px 60px; }
+  h1 { margin:0 0 4px; font-size:1.8rem; }
+  h2 { margin:34px 0 10px; font-size:1.15rem; color:var(--accent); }
+  .sub { color:var(--muted); margin:0 0 6px; }
+  .badge { display:inline-block; padding:2px 10px; border-radius:999px; font-size:.75rem; border:1px solid var(--line); color:var(--muted); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 18px; margin:10px 0; }
+  code { background:#0b1120; padding:1px 6px; border-radius:5px; font-size:.88em; }
+  .flow { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin:12px 0; }
+  .node { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:11px; text-align:center; font-size:.86rem; }
+  .node b { display:block; margin-bottom:3px; }
+  .node small { color:var(--muted); display:block; margin-top:4px; }
+  .node.local { border-color:var(--ok); }
+  .node.cloud { border-color:var(--cloud); }
+  .node.ui { border-color:var(--accent); }
+  .span3 { grid-column:1/-1; }
+  .legend { font-size:.82rem; color:var(--muted); }
+  .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin:0 4px 0 12px; vertical-align:middle; }
+  ol { padding-left:20px; } li { margin:7px 0; }
+  .path { color:var(--accent); }
+  details { background:var(--card); border:1px solid var(--line); border-radius:10px; margin:8px 0; padding:0 16px; }
+  summary { cursor:pointer; padding:12px 0; font-weight:600; }
+  .reuse { border-left:3px solid var(--accent); }
+  .foot { color:var(--muted); font-size:.82rem; margin-top:30px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>EscuchAI — Mapa de la app</h1>
+  <p class="sub">Dónde vive cada cosa y por dónde empezar a cambiarla. Snapshot del commit <code>c041a96</code>; el código puede haber cambiado desde entonces.</p>
+  <span class="badge">referencia · no es la app</span>
+
+  <h2>Qué es</h2>
+  <div class="card">
+    <p>Extensión de Chrome (Manifest V3) que transcribe una reunión de Google Meet en vivo y deja preguntarle a Gemini sobre lo que se dice. El audio se transcribe en el equipo con Whisper (transformers.js); a Gemini solo viaja texto (pulido de líneas, resumen y chat).</p>
+    <p>Cuatro piezas de MV3: <b>side panel</b> (la UI), <b>service worker</b> (coordina), <b>offscreen document</b> (corre Whisper sobre el audio) y <b>content script</b> (lee el nombre del hablante en Meet).</p>
+  </div>
+
+  <h2>Una acción, de principio a fin: "grabar y ver una línea"</h2>
+  <div class="flow" role="img" aria-label="Flujo: botón Grabar en el side panel, service worker pide el stream, offscreen transcribe con Whisper, Gemini pule, la línea aparece en el panel">
+    <div class="node ui span3"><b>Side panel · botón Grabar</b><small>src/sidepanel/sidepanel.js → startRecording()</small></div>
+    <div class="node"><b>Service worker</b><small>service-worker.js → startRecording() pide tabCapture; espera offscreen-ready</small></div>
+    <div class="node local"><b>Offscreen + Whisper</b><small>offscreen.js → startCapture() y transcribeWindow() (local)</small></div>
+    <div class="node cloud"><b>Gemini pule</b><small>lib/gemini.js → polishTranscript()</small></div>
+    <div class="node ui span3"><b>Línea en pantalla</b> <code>Nombre: frase</code><small>sidepanel.js → handleRawChunk()</small></div>
+  </div>
+  <p class="legend"><span class="dot" style="background:var(--ok)"></span>Local <span class="dot" style="background:var(--cloud)"></span>Sale a Gemini (solo texto) <span class="dot" style="background:var(--accent)"></span>UI</p>
+
+  <h2>Ruta de 3 paradas (referencia, no recorrida en vivo)</h2>
+  <ol>
+    <li><b>Entrada:</b> <span class="path">src/sidepanel/sidepanel.js</span> → <code>startRecording()</code>. Valida IA configurada y que la pestaña sea Meet, y pide al service worker iniciar la captura.</li>
+    <li><b>Captura + transcripción:</b> <span class="path">src/offscreen/offscreen.js</span> → <code>startCapture()</code> abre el audio de la pestaña, <code>recordLoop()</code> lo corta en ventanas y <code>transcribeWindow()</code> lo pasa por Whisper. El handshake <code>offscreen-ready</code> (en <span class="path">src/background/service-worker.js</span>) es lo que hace que la orden de captura no se pierda.</li>
+    <li><b>Salida:</b> <span class="path">src/sidepanel/sidepanel.js</span> → <code>handleRawChunk()</code> crea la línea, le pide a <span class="path">src/lib/gemini.js</span> → <code>polishTranscript()</code> que la pula, y el nombre del hablante llega desde <span class="path">src/content/meet-speaker.js</span>.</li>
+  </ol>
+
+  <h2>Para cambiar esto, empieza aquí</h2>
+  <div class="card">
+    <details>
+      <summary>El retraso o el tamaño de las ventanas de audio</summary>
+      <p><code>WINDOW_MS</code> y el modelo <code>MODEL_ID</code> en <span class="path">src/offscreen/offscreen.js</span>. El plan B del spec (whisper-tiny, ventanas más cortas) se aplica aquí.</p>
+    </details>
+    <details>
+      <summary>Cómo se detecta quién habla</summary>
+      <p><span class="path">src/content/meet-speaker.js</span>: tres vías (subtítulos nativos, único acompañante, indicador visual) y la etiqueta de respaldo "Participante Indistinguible".</p>
+    </details>
+    <details>
+      <summary>El prompt del chat o del resumen</summary>
+      <p>Chat: <code>buildChatSystem()</code> en <span class="path">src/sidepanel/sidepanel.js</span>. Resumen: <code>summarize()</code> en <span class="path">src/sidepanel/actions.js</span>.</p>
+    </details>
+    <details>
+      <summary>El flujo de proveedor/API key/modelo</summary>
+      <p><span class="path">src/sidepanel/settings.js</span> (UI del flujo) y <span class="path">src/lib/gemini.js</span> (validar key, listar modelos, llamar).</p>
+    </details>
+  </div>
+
+  <h2>Una práctica para reutilizar</h2>
+  <div class="card reuse">
+    <p><b>Cuando tengas una versión que ya funciona, úsala como evidencia de diagnóstico.</b></p>
+    <p>El bug "Modelo listo pero no transcribe nada" tenía dos causas plausibles (AudioContext suspendido vs. mensaje de captura perdido). En vez de iterar a ciegas sobre el síntoma, comparar <span class="path">offscreen.js</span>/<span class="path">background.js</span> contra la v1 que funcionaba señaló la causa en un paso: la v1 esperaba <code>OFFSCREEN_READY</code> antes de enviar la orden; la v2 no. Quedó registrado en <span class="path">devpost/checklist.md</span> &gt; Revisions.</p>
+    <p>Es el mismo espíritu del plan-first que practicaste: en el spec marcamos "medir la latencia de Whisper + Gemini temprano" como riesgo a resolver antes de escribir el resto. Resolver las incógnitas con evidencia (un diff, una medición, una prueba) en vez de intuición es lo que evita las horas de iteración que querías ahorrarte.</p>
+  </div>
+
+  <h2>Cómo correr la app otra vez</h2>
+  <div class="card">
+    <p>En <code>chrome://extensions</code>: activa "Modo de desarrollador", pulsa "Cargar descomprimida" y elige la carpeta del proyecto. Abre el panel con el icono de EscuchAI estando en una pestaña de Google Meet, configura Gemini en Ajustes y pulsa Iniciar grabación.</p>
+  </div>
+
+  <p class="foot">Snapshot del commit <code>c041a96</code>. Es una foto del momento: el código puede divergir en commits posteriores.</p>
+</main>
+</body>
+</html>
