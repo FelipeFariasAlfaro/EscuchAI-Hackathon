@@ -1,81 +1,81 @@
 # EscuchAI
 
-Extensión de Chrome que transcribe una reunión de **Google Meet** en vivo y te permite preguntarle a una IA sobre lo que se dice, mientras ocurre.
+A Chrome extension that transcribes a **Google Meet** meeting live and lets you ask an AI about what's being said, while it happens.
 
-El audio se transcribe **en tu propio equipo** con Whisper (ejecutado en el navegador vía [transformers.js](https://huggingface.co/docs/transformers.js)). A la IA solo viaja **texto**: el pulido de cada línea, el resumen y las preguntas del chat. No se usan bases de datos ni almacenamiento en la nube; la configuración vive solo en tu navegador.
+Audio is transcribed **on your own machine** with Whisper (running in the browser via [transformers.js](https://huggingface.co/docs/transformers.js)). Only **text** is sent to the AI: the polishing of each line, the summary, and your chat questions. No external databases or cloud storage are used; your configuration lives only in your browser.
 
-## Qué hace
+## What it does
 
-- **Transcripción en vivo** del audio de la pestaña de Meet, en español e inglés.
-- **Identifica quién habla**: cada línea aparece como `Nombre: frase`. Tu propia voz se marca como `Tú`; si no se puede determinar el hablante, se usa `Participante Indistinguible`.
-- **Chat con la IA** sobre la reunión, con historial, usando toda la transcripción disponible como contexto. Funciona mientras sigues grabando.
-- **Resumir** la reunión con la IA.
-- **Copiar** la transcripción y **exportarla** como TXT o Markdown.
+- **Live transcription** of the Meet tab audio, in Spanish and English.
+- **Speaker identification**: each line shows up as `Name: sentence`. Your own voice is labeled `Tú` ("You"); if the speaker can't be determined, it falls back to `Participante Indistinguible` ("Indistinguishable participant").
+- **AI chat** about the meeting, with history, using all available transcript text as context. It works while you keep recording.
+- **Summarize** the meeting with the AI.
+- **Copy** the transcript and **export** it as TXT or Markdown.
 
-## Requisitos
+## Requirements
 
-- Google Chrome de escritorio (idealmente con WebGPU; si no, usa WebAssembly, más lento).
-- Una **API key de Google Gemini**. Puedes obtenerla en [Google AI Studio](https://aistudio.google.com/apikey).
-- Conexión a internet la primera vez (para descargar el modelo Whisper, que luego queda en caché, y para las llamadas a la IA).
+- Desktop Google Chrome (ideally with WebGPU; otherwise it falls back to WebAssembly, which is slower).
+- A **Google Gemini API key**. You can get one at [Google AI Studio](https://aistudio.google.com/apikey).
+- Internet access the first time (to download the Whisper model, which is then cached, and for the AI calls).
 
-## Instalación
+## Installation
 
-1. Descarga o clona este repositorio:
+1. Download or clone this repository:
    ```bash
    git clone https://github.com/FelipeFariasAlfaro/EscuchAI-Hackathon.git
    ```
-2. Abre Chrome y ve a `chrome://extensions`.
-3. Activa el **Modo de desarrollador** (interruptor arriba a la derecha).
-4. Pulsa **Cargar descomprimida** y selecciona la carpeta del proyecto (la que contiene `manifest.json`).
-5. El icono de EscuchAI (una oreja) aparecerá en la barra de extensiones. Puedes fijarlo con el icono de puzzle para tenerlo a mano.
+2. Open Chrome and go to `chrome://extensions`.
+3. Enable **Developer mode** (toggle in the top-right corner).
+4. Click **Load unpacked** and select the project folder (the one containing `manifest.json`).
+5. The EscuchAI icon (an ear) will appear in the extensions bar. You can pin it from the puzzle icon to keep it handy.
 
-## Configurar la IA (Gemini)
+## Configure the AI (Gemini)
 
-1. Haz clic en el icono de EscuchAI para abrir el panel lateral.
-2. Ve a la pestaña **Ajustes**.
-3. Elige **Gemini** como proveedor y pega tu API key.
-4. Pulsa **Validar**: se cargará la lista de modelos disponibles para tu key. Si la key es inválida, verás un aviso.
-5. Elige un modelo y pulsa **Guardar**. La configuración queda guardada localmente y persiste entre sesiones.
+1. Click the EscuchAI icon to open the side panel.
+2. Go to the **Ajustes** (Settings) tab.
+3. Choose **Gemini** as the provider and paste your API key.
+4. Click **Validar** (Validate): the list of models available for your key will load. If the key is invalid, you'll see a warning.
+5. Pick a model and click **Guardar** (Save). The configuration is stored locally and persists between sessions.
 
-> La API key se guarda solo en el almacenamiento local de tu navegador (`chrome.storage.local`). No se sube a ningún servidor ni se incluye en el repositorio.
+> The API key is stored only in your browser's local storage (`chrome.storage.local`). It is never uploaded to any server nor included in this repository.
 
-## Uso
+## Usage
 
-1. Entra a una reunión de **Google Meet** (`https://meet.google.com/...`).
-2. Con esa pestaña activa, **haz clic en el icono de EscuchAI** para abrir el panel lateral.
-   - Este clic es importante: Chrome solo permite capturar el audio de la pestaña si "invocas" la extensión sobre ella desde el icono.
-3. Pulsa **Iniciar grabación**. El botón se pone rojo con el texto "Grabando".
-   - La primera vez, el modelo de transcripción se descarga (unos cientos de MB) y puede tardar un momento. Verás el progreso en el panel.
-4. A medida que se habla en la reunión, aparecen las líneas de transcripción en vivo.
-5. Escribe una pregunta en la caja de abajo para consultarle a la IA sobre la reunión. Puedes usar **Resumir**, **Copiar** y exportar en **TXT/MD**.
+1. Join a **Google Meet** meeting (`https://meet.google.com/...`).
+2. With that tab active, **click the EscuchAI icon** to open the side panel.
+   - This click matters: Chrome only allows capturing a tab's audio if you "invoke" the extension on it from the icon.
+3. Click **Iniciar grabación** (Start recording). The button turns red with the text "Grabando" (Recording).
+   - The first time, the transcription model is downloaded (a few hundred MB) and may take a moment. You'll see the progress in the panel.
+4. As people speak in the meeting, transcript lines appear live.
+5. Type a question in the box at the bottom to ask the AI about the meeting. You can also use **Resumir** (Summarize), **Copiar** (Copy), and export as **TXT/MD**.
 
-### Permiso de micrófono (opcional)
+### Microphone permission (optional)
 
-El micrófono sirve solo para transcribir **tu propia voz** (etiquetada como `Tú`). La voz de los demás participantes llega por el audio de la pestaña y **no** necesita el micrófono.
+The microphone is only used to transcribe **your own voice** (labeled `Tú`). The other participants' voices come through the tab audio and do **not** require the microphone.
 
-- La grabación **arranca igual sin micrófono**: en ese caso solo no se transcribe tu voz.
-- Si quieres incluir tu voz, EscuchAI te ofrecerá, una sola vez, abrir una pestaña para conceder el permiso. Pulsa **Permitir micrófono** y acepta el diálogo de Chrome. Luego vuelve a Meet y graba.
-- Si lo bloqueaste por error, puedes rehabilitarlo desde el icono de permisos en la barra de direcciones de Chrome.
+- Recording **starts even without the microphone**: in that case only your own voice isn't transcribed.
+- If you want to include your voice, EscuchAI will offer, once, to open a tab to grant the permission. Click **Permitir micrófono** (Allow microphone) and accept the Chrome dialog. Then go back to Meet and record.
+- If you blocked it by mistake, you can re-enable it from the permissions icon in Chrome's address bar.
 
-## Privacidad
+## Privacy
 
-- El audio de la reunión se captura y transcribe **localmente**; el audio nunca sale de tu equipo.
-- Lo único que se envía a la IA (Gemini) es **texto**: líneas a pulir, el resumen y tus preguntas del chat.
-- No hay bases de datos ni almacenamiento en la nube. La configuración se guarda solo en tu navegador.
+- The meeting audio is captured and transcribed **locally**; the audio never leaves your machine.
+- The only thing sent to the AI (Gemini) is **text**: lines to polish, the summary, and your chat questions.
+- There are no external databases or cloud storage. Configuration is saved only in your browser.
 
-## Cómo está construido
+## How it's built
 
-Extensión Manifest V3 con cuatro piezas:
+A Manifest V3 extension with four parts:
 
-- **Side panel** (`src/sidepanel/`): la interfaz.
-- **Service worker** (`src/background/`): coordina la captura y el paso de mensajes.
-- **Offscreen document** (`src/offscreen/`): ejecuta Whisper sobre el audio capturado.
-- **Content script** (`src/content/`): lee el DOM de Meet para identificar al hablante.
+- **Side panel** (`src/sidepanel/`): the interface.
+- **Service worker** (`src/background/`): coordinates capture and message passing.
+- **Offscreen document** (`src/offscreen/`): runs Whisper on the captured audio.
+- **Content script** (`src/content/`): reads the Meet DOM to identify the speaker.
 
-La planificación del proyecto (scope, PRD, spec, checklist y un mapa de la app) está en la carpeta [`devpost/`](devpost/).
+The project planning docs (scope, PRD, spec, checklist, and an app map) are in the [`devpost/`](devpost/) folder.
 
-## Limitaciones
+## Limitations
 
-- Solo Google Meet por ahora.
-- Solo el proveedor Gemini por ahora (OpenAI, Claude y Ollama quedan como trabajo futuro).
-- La identificación del hablante es de "mejor esfuerzo": depende del DOM de Meet y puede fallar en algunos casos.
+- Google Meet only for now.
+- Gemini provider only for now (OpenAI, Claude, and Ollama are left as future work).
+- Speaker identification is best-effort: it depends on the Meet DOM and may fail in some cases.
