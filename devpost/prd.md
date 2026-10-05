@@ -27,7 +27,7 @@ Cuatro tabs principales en la cabecera, junto al icono de micrófono y el nombre
 - Arriba: botón **Iniciar grabación** / **Grabando** (con punto que pasa a rojo al grabar).
 - Sub-tabs: **Transcripción** (funcional), **Tareas**, **Conflictos**, **Participación**, **Alertas** (visibles pero deshabilitadas / "Próximamente").
 - Centro: área de transcripción en vivo. Placeholder antes de grabar.
-- Abajo (fila de acciones): **Resumir**, **Copiar**, **TXT**, **MD** (visibles pero deshabilitadas / "Próximamente").
+- Abajo (fila de acciones): **Resumir**, **Copiar**, **TXT**, **MD** (activadas en la PoC por decisión en la revisión final; ver `checklist.md > Revisions`). Copiar/TXT/MD son locales y exportan solo la transcripción; Resumir usa Gemini y muestra el resumen en el flujo.
 - Pie: caja de **chat con la IA** con placeholder y botón de enviar.
 
 ### Ajustes

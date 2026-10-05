@@ -6,6 +6,7 @@ import { renderAbout } from "./about.js";
 import { getAiConfig, isConfigured } from "../lib/storage.js";
 import { polishTranscript, generateContent } from "../lib/gemini.js";
 import { findEcho, dominantSpeaker, renderMiniMarkdown } from "../lib/transcript-utils.js";
+import { copyTranscript, exportTxt, exportMd, summarize } from "./actions.js";
 
 /* ---------------- Modal helper ---------------- */
 const modalBackdrop = document.getElementById("modalBackdrop");
@@ -419,6 +420,73 @@ chatInput.addEventListener("keydown", (ev) => {
   if (ev.key === "Enter" && !ev.shiftKey && !ev.isComposing) {
     ev.preventDefault();
     sendChat().catch((err) => showModal(`Error: ${err.message}`));
+  }
+});
+
+/* ---------------- Acciones: Copiar, Exportar, Resumir ---------------- */
+const summarizeBtn = document.getElementById("summarizeBtn");
+const copyBtn = document.getElementById("copyBtn");
+const txtBtn = document.getElementById("txtBtn");
+const mdBtn = document.getElementById("mdBtn");
+
+function requireTranscript() {
+  if (!transcript.length) {
+    showModal("Aún no hay nada transcrito. Inicia la grabación primero.");
+    return false;
+  }
+  return true;
+}
+
+copyBtn.addEventListener("click", async () => {
+  if (!requireTranscript()) return;
+  try {
+    await copyTranscript(transcript);
+    const prev = copyBtn.innerHTML;
+    copyBtn.textContent = "Copiado";
+    setTimeout(() => { copyBtn.innerHTML = prev; }, 1500);
+  } catch (err) {
+    showModal(`No se pudo copiar: ${err.message}`);
+  }
+});
+
+txtBtn.addEventListener("click", () => {
+  if (!requireTranscript()) return;
+  exportTxt(transcript);
+});
+
+mdBtn.addEventListener("click", () => {
+  if (!requireTranscript()) return;
+  exportMd(transcript);
+});
+
+let summarizing = false;
+summarizeBtn.addEventListener("click", async () => {
+  if (!requireTranscript() || summarizing) return;
+  summarizing = true;
+  summarizeBtn.disabled = true;
+  const bubble = addChatMsg("model", "Resumiendo…", "pending");
+  try {
+    const res = await summarize(transcript);
+    if (res.needsConfig) {
+      bubble.remove();
+      await showModal("Primero debes configurar la IA en la tab Ajustes.");
+      activateTab("ajustes");
+      return;
+    }
+    if (res.ok && res.text) {
+      bubble.className = "chat-msg model summary";
+      renderMiniMarkdown(bubble, res.text);
+    } else {
+      bubble.className = "chat-msg model error";
+      bubble.textContent = `No se pudo resumir: ${res.error || "respuesta vacía"}`;
+    }
+  } catch (err) {
+    bubble.className = "chat-msg model error";
+    bubble.textContent = `No se pudo resumir: ${err.message}`;
+  } finally {
+    summarizing = false;
+    summarizeBtn.disabled = false;
+    scrollToEnd();
   }
 });
 

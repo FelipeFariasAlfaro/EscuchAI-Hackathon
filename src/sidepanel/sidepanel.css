@@ -144,6 +144,8 @@ body {
 .chat-msg { padding: 8px 10px; border-radius: 8px; margin: 6px 0; max-width: 92%; }
 .chat-msg.user { background: var(--accent-dim); color: #06222a; margin-left: auto; }
 .chat-msg.model { background: var(--card); border: 1px solid var(--line); }
+.chat-msg.summary { background: var(--bg-2); border-left: 3px solid var(--accent); max-width: 100%; }
+.chat-msg.model.error { border-color: var(--rec); color: var(--rec); }
 .chat-msg.pending { opacity: .6; font-style: italic; }
 .chat-msg.error { border-color: var(--rec); color: var(--rec); }
 .chat-msg p { margin: 0 0 6px; }
