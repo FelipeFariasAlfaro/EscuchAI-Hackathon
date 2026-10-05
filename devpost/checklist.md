@@ -9,7 +9,7 @@ Build mode: fast
 
 ## Slices
 
-- [ ] **1. La extensión carga en Chrome y el side panel muestra la UI del mock**
+- [x] **1. La extensión carga en Chrome y el side panel muestra la UI del mock**
   Becomes usable: Puedes cargar la extensión descomprimida, abrir el side panel y ver las tabs (Reunión, Historial, Ajustes, Sobre), las sub-tabs, el botón Grabar, el área de transcripción con su placeholder, la fila de acciones deshabilitadas y la caja de chat. Nada funciona aún, pero la cáscara es navegable.
   Why now: Es el bootstrapping (manifest, estructura de archivos, side panel) y deja dónde aterrizar todo lo demás. Verifica temprano que `chrome.sidePanel` y el manifest MV3 cargan sin errores.
   PRD ref: `prd.md > Screens and Layout`, `prd.md > Look and Feel`
@@ -19,7 +19,7 @@ Build mode: fast
   Learner check: Cargar la extensión, abrir el side panel en cualquier pestaña y confirmar que se ve como tu mock y que las tabs cambian.
   Commit: `Scaffold MV3 extension and side panel UI`
 
-- [ ] **2. Configurar Gemini en Ajustes (validar key, listar modelos, guardar y persistir)**
+- [x] **2. Configurar Gemini en Ajustes (validar key, listar modelos, guardar y persistir)**
   Becomes usable: En Ajustes eliges Gemini, pones la API key, validas, se cargan los modelos, eliges uno y guardas. Al reabrir el navegador la config sigue ahí. Key inválida muestra modal de error.
   Why now: El resto del núcleo (pulido y chat) depende de tener Gemini configurado. Verifica temprano el contrato real de la API de Gemini (riesgo externo).
   PRD ref: `prd.md > Configuración de IA (Ajustes)`, `prd.md > States and Boundaries`
