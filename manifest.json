@@ -30,7 +30,13 @@
     "default_path": "src/sidepanel/sidepanel.html"
   },
   "action": {
-    "default_title": "Abrir EscuchAI"
+    "default_title": "Abrir EscuchAI",
+    "default_icon": {
+      "16": "assets/icon-16.png",
+      "32": "assets/icon-32.png",
+      "48": "assets/icon-48.png",
+      "128": "assets/icon.png"
+    }
   },
   "content_scripts": [
     {
@@ -40,6 +46,9 @@
     }
   ],
   "icons": {
+    "16": "assets/icon-16.png",
+    "32": "assets/icon-32.png",
+    "48": "assets/icon-48.png",
     "128": "assets/icon.png"
   }
 }

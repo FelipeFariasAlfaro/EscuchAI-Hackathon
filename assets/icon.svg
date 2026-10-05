@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a2740"/>
+      <stop offset="1" stop-color="#0f1420"/>
+    </linearGradient>
+    <linearGradient id="ear" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4fe3ea"/>
+      <stop offset="1" stop-color="#39c0c8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fondo redondeado, tema oscuro de la app -->
+  <rect x="0" y="0" width="128" height="128" rx="28" fill="url(#bg)"/>
+
+  <!-- Oreja: contorno exterior -->
+  <path fill="url(#ear)" d="
+    M72 24
+    C44 24 30 44 30 68
+    C30 86 40 96 50 100
+    C58 103 60 108 60 114
+    C60 120 65 124 71 124
+    C80 124 86 117 86 108
+    C86 98 80 92 73 88
+    C66 84 62 79 62 72
+    C62 65 67 60 73 60
+    C80 60 84 65 84 72
+    C84 78 90 82 96 80
+    C101 78 104 73 104 66
+    C104 42 92 24 72 24
+    Z"/>
+
+  <!-- Hueco interno de la oreja (canal auditivo) -->
+  <path fill="#0f1420" d="
+    M71 44
+    C57 44 48 55 48 68
+    C48 76 52 81 57 84
+    C53 78 52 73 52 68
+    C52 56 60 48 71 48
+    C72 48 73 48 74 48
+    C73 46 72 45 71 44
+    Z" opacity="0.55"/>
+
+  <!-- Ondas de sonido entrando a la oreja -->
+  <g fill="none" stroke="#4fe3ea" stroke-linecap="round">
+    <path d="M100 50 C108 58 108 70 100 78" stroke-width="5" opacity="0.9"/>
+    <path d="M108 42 C120 54 120 74 108 86" stroke-width="5" opacity="0.55"/>
+  </g>
+</svg>
