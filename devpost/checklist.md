@@ -39,7 +39,7 @@ Build mode: fast
   Learner check: Pulsar Grabar en una pestaña con voz, ver aparecer una línea pulida, y decirme si el retraso te parece usable para una reunión.
   Commit: `Capture tab audio, transcribe with Whisper, polish with Gemini`
 
-- [ ] **4. Identificar quién habla leyendo el DOM de Meet**
+- [x] **4. Identificar quién habla leyendo el DOM de Meet**
   Becomes usable: En una reunión real de Meet, cada línea aparece como `Nombre: frase`, usando el participante que Meet marca como "hablando". Sin dato → "Participante Indistinguible".
   Why now: Segundo riesgo del spec (selectores del DOM de Meet). Se construye sobre la transcripción ya funcionando.
   PRD ref: `prd.md > Grabación y transcripción en vivo` (nombre por línea)
@@ -49,7 +49,7 @@ Build mode: fast
   Learner check: Entrar a un Meet, grabar mientras alguien habla, y confirmar que las líneas muestran el nombre correcto la mayoría de las veces.
   Commit: `Attribute transcript lines to Meet speaker via DOM`
 
-- [ ] **5. Chat con la IA sobre la reunión, con historial, durante la grabación**
+- [x] **5. Chat con la IA sobre la reunión, con historial, durante la grabación**
   Becomes usable: Escribes una pregunta en la caja de abajo, se envía a Gemini con toda la transcripción disponible, y la respuesta se añade al chat sin borrar lo anterior. Funciona mientras sigues grabando. Sin IA configurada → modal "configura la IA primero". Fuera de Meet → aviso "solo en Google Meet".
   Why now: Es la otra mitad del kernel y cierra la demo (grabar → preguntar). Depende de la transcripción y de Gemini ya listos.
   PRD ref: `prd.md > Chat con la IA sobre la reunión`, `prd.md > States and Boundaries`
@@ -59,7 +59,7 @@ Build mode: fast
   Learner check: Grabar una interacción, preguntarle a la IA sobre ella y confirmar que responde con base en lo transcrito, encadenando mensajes.
   Commit: `Add live AI chat about the meeting with history`
 
-- [ ] **6. Tab Sobre (pantalla de acerca de)**
+- [x] **6. Tab Sobre (pantalla de acerca de)**
   Becomes usable: La tab Sobre muestra el icono al centro, título y versión, nombre, email, LinkedIn, GitHub y el link al repositorio.
   Why now: Pieza estática y barata, confirmada para la PoC; se deja al final por no ser parte del núcleo demostrable.
   PRD ref: `prd.md > Screens and Layout` (Historial y Sobre)
@@ -71,7 +71,7 @@ Build mode: fast
 
 ## Hands-on Checkpoints
 
-- [ ] Early usable behavior explored — tras el slice 3 (medición de latencia Whisper + Gemini), donde tu feedback puede cambiar el resto del build (plan B).
+- [x] Early usable behavior explored — probado en Chrome real: transcripción en vivo + pulido de Gemini + chat funcionan de punta a punta. La latencia por ventana (~5s) resultó usable; no se necesitó el plan B.
 - [ ] Final kick-the-tires exploration and feedback completed
 
 ## Final Review
