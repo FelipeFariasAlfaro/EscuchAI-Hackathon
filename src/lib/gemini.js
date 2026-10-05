@@ -89,15 +89,46 @@ export async function generateContent(apiKey, model, messages, systemText) {
 }
 
 /**
- * Pule un bloque de texto crudo de transcripción (puntuación, mayúsculas, correcciones leves).
- * No inventa contenido; devuelve el texto crudo si falla.
+ * Segunda capa sobre Whisper: pule un fragmento crudo (acentos, puntuación,
+ * términos en inglés castellanizados, palabras partidas en el borde del audio).
+ * Es correctivo, nunca creativo. Si falla, devuelve el texto crudo.
+ *
+ * @param {string} apiKey
+ * @param {string} model
+ * @param {string} rawText  fragmento a corregir
+ * @param {{lang?: "es"|"en"|"auto", previous?: string}} [opts]
+ *        previous: línea ya corregida anterior, solo como contexto.
  */
-export async function polishTranscript(apiKey, model, rawText) {
+export async function polishTranscript(apiKey, model, rawText, opts = {}) {
+  const { lang = "es", previous = "" } = opts;
+  const idioma =
+    lang === "en" ? "inglés" : lang === "auto" ? "el que se hable (español o inglés)" : "español";
   const system =
-    "Eres un corrector de transcripciones. Devuelve EXACTAMENTE el mismo contenido " +
-    "con puntuación y mayúsculas correctas y errores evidentes de reconocimiento corregidos. " +
-    "No agregues, resumas ni comentes nada. Responde solo con el texto corregido.";
-  const result = await generateContent(apiKey, model, [{ role: "user", text: rawText }], system);
+    "Corriges transcripciones automáticas de reuniones. Devuelve SOLO la línea corregida.\n" +
+    "Reglas:\n" +
+    `- Idioma base: ${idioma}. Corrige ortografía, acentos y puntuación.\n` +
+    "- Términos técnicos, marcas y palabras en inglés se escriben en inglés correcto " +
+    '(ej. "deploy", "sprint", "testing"), NO castellanizados.\n' +
+    "- El audio se corta en fragmentos: las palabras del inicio y del final pueden estar " +
+    "partidas o incompletas. Recompón la palabra usando el contexto previo si se da.\n" +
+    "- NUNCA acortes ni elimines palabras: conserva todo lo que se dijo. " +
+    "Si una palabra quedó a medias, complétala; no la borres.\n" +
+    "- NO añadas, resumas ni inventes contenido. Si es ininteligible, devuélvela igual.\n" +
+    "- No repitas el contexto previo. Responde sin comentarios ni comillas.";
+  const user = previous
+    ? `CONTEXTO PREVIO (no lo devuelvas): ...${previous.slice(-120)}\n\nLÍNEA A CORREGIR:\n${rawText}`
+    : rawText;
+
+  const result = await generateContent(apiKey, model, [{ role: "user", text: user }], system);
   if (!result.ok || !result.text) return { ok: false, text: rawText, error: result.error };
-  return { ok: true, text: result.text.trim() };
+
+  let text = result.text.trim();
+  // Red de seguridad: si el largo se aleja mucho del original, la IA acortó o
+  // inventó; preferimos el crudo (el spec prohíbe perder contenido).
+  // Si la IA devolvió contexto + línea, quedarse con lo último.
+  text = text.replace(/^[\s\S]*?l[ií]nea a corregir:?\s*/i, "");
+  if (text.length < rawText.length * 0.6 || text.length > rawText.length * 2 + 40) {
+    return { ok: false, text: rawText, error: "respuesta fuera de rango" };
+  }
+  return { ok: true, text };
 }

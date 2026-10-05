@@ -29,7 +29,7 @@ Build mode: fast
   Learner check: Configurar tu Gemini de verdad en Ajustes, guardar, cerrar y reabrir, y confirmar que sigue configurado.
   Commit: `Add Gemini settings flow with validation and persistence`
 
-- [ ] **3. Probar la latencia: capturar audio de la pestaña, transcribir con Whisper y pulir con Gemini**
+- [x] **3. Probar la latencia: capturar audio de la pestaña, transcribir con Whisper y pulir con Gemini**
   Becomes usable: Con una pestaña de Meet (o una pestaña con audio para la prueba), pulsar Grabar captura el audio, Whisper transcribe un bloque y Gemini lo pule, y aparece una línea de texto. El botón pasa a rojo "Grabando". Esto mide la incertidumbre clave: ¿el delay end-to-end es aceptable?
   Why now: Es el riesgo técnico central del spec (`Decisions and Open Issues`). Si la latencia es demasiado alta, aquí decidimos el plan B antes de construir el resto. El kernel aparece temprano.
   PRD ref: `prd.md > Grabación y transcripción en vivo`
@@ -91,3 +91,10 @@ Reflection: [pendiente]
 Activity mode: [pendiente]
 
 ## Revisions
+
+- Captura de pestaña y permiso activeTab — El plan asumía lanzar `chrome.tabCapture.getMediaStreamId` con `targetTabId` desde el service worker al pulsar Grabar. El build descubrió que `tabCapture` exige que la extensión haya sido "invocada" sobre la pestaña (gesto del usuario que active `activeTab`), y abrir el side panel desde el icono no basta con un `targetTabId` arbitrario. Corrección interna (no cambia el producto): pedir el `streamId` de la pestaña activa invocada, y guiar al usuario a invocar la extensión con un clic en el icono sobre la pestaña de Meet. Fuente: docs de Chrome y reportes de activeTab + tabCapture en MV3.
+- Actualización de la captura (activeTab) — El icono ya no usa `openPanelOnActionClick`: `action.onClicked` abre el panel a mano con `sidePanel.open` de forma síncrona, porque con la apertura automática la pestaña no queda "invocada" y `tabCapture` falla con "Extension has not been invoked".
+- Motor de transcripción portado desde EscuchAI v1 (decisión del usuario: no reconstruir lo que ya funcionaba) — Se trajeron las piezas probadas: WASM de ONNX vendorizado en `vendor/` (el CSP de MV3 bloquea el CDN), captura con `MediaRecorder` directo sobre el stream (el `ScriptProcessor` entregaba audio en silencio), canal de micrófono separado etiquetado "Tú", página de permiso de micrófono en una pestaña de la extensión, filtro de eco entre canales, atribución del hablante por ventana de tiempo, selector de idioma (Auto/Español/English) y pulido con Gemini usando la línea anterior como contexto. La arquitectura, los `target` de mensajes y la UI de escuchai-2 se mantienen.
+- Estado de los slices 4 y 5 — Implementados (hablante por content script; chat con historial, guardas y markdown seguro) y la tab Sobre del slice 6. Verificados solo con pruebas automáticas sobre el panel con `chrome.*` simulado. Sin probar en Chrome real ni en una reunión de Meet, por lo que las casillas no se marcan hasta tu verificación.
+- Nota de alcance — Reutilizar código de v1 contradice la regla de Devpost "proyecto nuevo, código nuevo". Es una PoC personal local; si algún día se envía al hackathon, esto debe resolverse antes.
+- El permiso de micrófono dejó de bloquear la grabación — Síntoma en prueba real: tras conceder el micrófono en la pestaña dedicada, pulsar Grabar "no hacía nada" y reabría la pestaña de permiso en bucle. Causa: el estado del permiso consultado desde el side panel no siempre pasa a "granted" aunque se conceda en la pestaña de la extensión, y la grabación estaba condicionada a ese estado. Como el micrófono es OPCIONAL (solo transcribe la voz propia; la de los demás llega por el audio de la pestaña), ahora la grabación arranca siempre con el audio de la pestaña y el micrófono se ofrece una sola vez sin bloquear. Fuente: comportamiento conocido de getUserMedia en offscreen/side panel de MV3.

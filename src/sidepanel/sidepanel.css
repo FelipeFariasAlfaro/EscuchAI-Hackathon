@@ -66,7 +66,17 @@ body {
 .panel.active { display: flex; }
 
 /* ---------- Record button ---------- */
-.rec-row { display: flex; justify-content: flex-start; margin-bottom: 10px; }
+.rec-row { display: flex; justify-content: flex-start; align-items: center; gap: 8px; margin-bottom: 10px; }
+.lang-pick select {
+  background: var(--bg-2); border: 1px solid var(--line); color: var(--text);
+  border-radius: var(--radius); padding: 9px 8px; font-size: .9rem; cursor: pointer;
+}
+.lang-pick select:focus { outline: none; border-color: var(--accent); }
+.lang-pick select:disabled { opacity: .5; cursor: not-allowed; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
 .rec-btn {
   display: inline-flex; align-items: center; gap: 8px;
   background: var(--accent); color: #06222a; font-weight: 600;
@@ -134,6 +144,12 @@ body {
 .chat-msg { padding: 8px 10px; border-radius: 8px; margin: 6px 0; max-width: 92%; }
 .chat-msg.user { background: var(--accent-dim); color: #06222a; margin-left: auto; }
 .chat-msg.model { background: var(--card); border: 1px solid var(--line); }
+.chat-msg.pending { opacity: .6; font-style: italic; }
+.chat-msg.error { border-color: var(--rec); color: var(--rec); }
+.chat-msg p { margin: 0 0 6px; }
+.chat-msg p:last-child, .chat-msg ul:last-child { margin-bottom: 0; }
+.chat-msg ul { margin: 0 0 6px; padding-left: 18px; }
+.chat-msg strong { font-weight: 700; }
 
 /* ---------- Empty tabs ---------- */
 .empty-tab { color: var(--muted); text-align: center; margin-top: 30px; }
@@ -170,7 +186,15 @@ body {
 .about .about-version { color: var(--muted); font-size: .85rem; margin-bottom: 10px; }
 .about a { color: var(--accent); text-decoration: none; }
 .about a:hover { text-decoration: underline; }
-.about .about-field { font-size: .9rem; }
+.about .about-field { font-size: .9rem; margin: 0; }
+.about .about-card {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 22px 18px; width: 100%; max-width: 340px;
+}
+.about .about-img { border-radius: 14px; margin-bottom: 4px; }
+.about .about-links { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
+.about .about-oss { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
 
 /* ---------- Modal ---------- */
 .modal-backdrop {

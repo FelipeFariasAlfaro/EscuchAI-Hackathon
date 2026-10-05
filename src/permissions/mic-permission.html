@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EscuchAI — Permiso de micrófono</title>
+  <style>
+    body {
+      margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      background: #0f1420; color: #e6ebf5;
+      font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    .card {
+      background: #171e2e; border: 1px solid #2a3550; border-radius: 12px;
+      padding: 28px 32px; max-width: 460px; text-align: center;
+    }
+    h1 { font-size: 1.15rem; margin: 0 0 10px; }
+    p { color: #9aa7c2; margin: 0 0 18px; }
+    button {
+      background: #39c0c8; color: #06222a; border: none; border-radius: 10px;
+      padding: 10px 18px; font-weight: 700; font-size: .95rem; cursor: pointer;
+    }
+    #state { margin-top: 14px; min-height: 22px; font-weight: 600; }
+    .ok { color: #2fbf71; }
+    .err { color: #e5484d; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Permitir el micrófono</h1>
+    <p>
+      EscuchAI necesita tu micrófono para transcribir <strong>tu voz</strong>: la de los demás
+      participantes llega por el audio de la pestaña. Es un permiso de la extensión y se pide una sola vez.
+    </p>
+    <button id="btn">Permitir micrófono</button>
+    <div id="state"></div>
+  </div>
+  <script src="mic-permission.js"></script>
+</body>
+</html>
