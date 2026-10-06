@@ -210,3 +210,11 @@ body {
 .modal p { margin: 0 0 16px; }
 .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .hidden { display: none !important; }
+
+/* Modal de selección de idioma (primer uso) */
+.lang-setup { text-align: center; }
+.lang-setup h2 { margin: 0 0 6px; font-size: 1.05rem; }
+.lang-setup .muted { margin: 0 0 16px; font-size: .85rem; }
+.lang-setup-options { display: flex; gap: 10px; }
+.lang-setup-options .btn-accent { flex: 1; }
+#langSetupBackdrop { z-index: 60; }

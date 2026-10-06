@@ -1,6 +1,8 @@
 // Tab Sobre: pantalla estática de acerca de.
 // Implementa `prd.md > Screens and Layout` (Historial y Sobre).
 
+import { t } from "../lib/i18n.js";
+
 const LINKS = [
   { label: "farias3felipe@gmail.com", href: "mailto:farias3felipe@gmail.com" },
   { label: "LinkedIn", href: "https://www.linkedin.com/in/felipefariasalfaro/" },
@@ -32,14 +34,14 @@ export function renderAbout(root) {
   icon.width = 64;
   icon.height = 64;
 
-  const dev = el("p", "about-field", "Software desarrollado por ");
+  const dev = el("p", "about-field", t("about.devBy"));
   dev.appendChild(el("strong", null, "Felipe Farías A."));
 
   const links = el("div", "about-links");
   LINKS.forEach((l) => links.appendChild(link(l)));
 
   const oss = el("div", "about-oss");
-  oss.appendChild(el("p", "about-field muted", "Este es un proyecto de código abierto"));
+  oss.appendChild(el("p", "about-field muted", t("about.oss")));
   oss.appendChild(link(REPO));
 
   const card = el("div", "about-card");

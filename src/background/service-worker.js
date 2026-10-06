@@ -79,6 +79,17 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 let pendingStart = null;
 
 async function startRecording(tabId, lang) {
+  // Cerrar cualquier captura previa ANTES de pedir el stream: si un offscreen
+  // anterior sigue agarrando el audio de la pestaña, getMediaStreamId falla con
+  // "Cannot capture a tab with an active stream".
+  if (await hasOffscreen()) {
+    await chrome.runtime.sendMessage({ target: "offscreen", type: "stop-capture" }).catch(() => {});
+    await chrome.offscreen.closeDocument().catch(() => {});
+    // Dar un instante a Chrome para liberar el stream de la pestaña antes de
+    // volver a pedirlo; si no, puede seguir marcándolo como ocupado.
+    await new Promise((r) => setTimeout(r, 300));
+  }
+
   // El streamId caduca en pocos segundos: se pide justo antes de consumirlo.
   const streamId = await new Promise((resolve, reject) => {
     const opts = tabId ? { targetTabId: tabId } : {};
@@ -99,11 +110,33 @@ async function startRecording(tabId, lang) {
   await ensureOffscreen();
 
   // Pedir al content script de Meet que empiece a reportar quién habla.
-  if (tabId) {
-    chrome.tabs.sendMessage(tabId, { target: "content", type: "start-watch" }).catch(() => {
-      // Sin content script (p. ej. la pestaña estaba abierta antes de instalar):
-      // la transcripción sigue, solo no habrá nombres.
-    });
+  // Si Meet ya estaba abierto cuando se instaló/recargó la extensión, el content
+  // script declarado en el manifest no existe todavía: lo inyectamos y reintentamos.
+  if (tabId) await startSpeakerWatch(tabId);
+}
+
+async function startSpeakerWatch(tabId) {
+  const message = { target: "content", type: "start-watch" };
+  try {
+    await chrome.tabs.sendMessage(tabId, message);
+    return;
+  } catch (firstError) {
+    // Es normal justo después de recargar la extensión: los content scripts no
+    // se insertan retroactivamente en pestañas que ya estaban abiertas.
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        files: ["src/content/meet-speaker.js"],
+      });
+      await chrome.tabs.sendMessage(tabId, message);
+    } catch (injectError) {
+      console.warn("[EscuchAI] No se pudo iniciar la detección del hablante:", injectError || firstError);
+      chrome.runtime.sendMessage({
+        target: "sidepanel",
+        type: "speaker-status",
+        text: "No se pudo leer quién habla en Meet; se usará Participante Indistinguible.",
+      }).catch(() => {});
+    }
   }
 }
 

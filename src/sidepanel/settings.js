@@ -3,41 +3,57 @@
 
 import { getAiConfig, setAiConfig, isConfigured } from "../lib/storage.js";
 import { validateAndListModels } from "../lib/gemini.js";
+import { t, getUiLang } from "../lib/i18n.js";
 
-export async function renderSettings(root, { showModal } = {}) {
+export async function renderSettings(root, { showModal, onUiLangChange } = {}) {
   const existing = await getAiConfig();
+  const soon = t("settings.soon");
 
   root.innerHTML = `
     <div class="field">
-      <label for="providerSel">Proveedor de IA</label>
-      <select id="providerSel">
-        <option value="gemini">Gemini (Google)</option>
-        <option value="openai" disabled>OpenAI (próximamente)</option>
-        <option value="claude" disabled>Claude (próximamente)</option>
-        <option value="ollama" disabled>Ollama local (próximamente)</option>
+      <label for="uiLangSel">${t("settings.uiLang")}</label>
+      <select id="uiLangSel">
+        <option value="es">${t("lang.es")}</option>
+        <option value="en">${t("lang.en")}</option>
       </select>
     </div>
 
     <div class="field">
-      <label for="apiKeyInput">API key</label>
+      <label for="providerSel">${t("settings.provider")}</label>
+      <select id="providerSel">
+        <option value="gemini">Gemini (Google)</option>
+        <option value="openai" disabled>OpenAI (${soon})</option>
+        <option value="claude" disabled>Claude (${soon})</option>
+        <option value="ollama" disabled>Ollama local (${soon})</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="apiKeyInput">${t("settings.apiKey")}</label>
       <div class="row">
-        <input id="apiKeyInput" type="password" placeholder="Pega tu API key de Gemini"
+        <input id="apiKeyInput" type="password" placeholder="${t("settings.apiKey.placeholder")}"
                value="${existing?.apiKey ? escapeHtml(existing.apiKey) : ""}" />
-        <button id="validateBtn" class="btn-accent" style="flex:0 0 auto">Validar</button>
+        <button id="validateBtn" class="btn-accent" style="flex:0 0 auto">${t("settings.validate")}</button>
       </div>
       <span id="validateStatus"></span>
     </div>
 
     <div class="field" id="modelField" style="${existing?.model ? "" : "display:none"}">
-      <label for="modelSel">Modelo</label>
+      <label for="modelSel">${t("settings.model")}</label>
       <select id="modelSel"></select>
     </div>
 
     <div class="row">
-      <button id="saveBtn" class="btn-accent" ${existing?.model ? "" : "disabled"}>Guardar</button>
+      <button id="saveBtn" class="btn-accent" ${existing?.model ? "" : "disabled"}>${t("settings.save")}</button>
     </div>
-    <span id="saveStatus">${isConfigured(existing) ? '<span class="saved-badge">Configuración guardada.</span>' : ""}</span>
+    <span id="saveStatus">${isConfigured(existing) ? `<span class="saved-badge">${t("settings.saved")}</span>` : ""}</span>
   `;
+
+  const uiLangSel = root.querySelector("#uiLangSel");
+  uiLangSel.value = getUiLang();
+  uiLangSel.addEventListener("change", () => {
+    if (onUiLangChange) onUiLangChange(uiLangSel.value);
+  });
 
   const providerSel = root.querySelector("#providerSel");
   const apiKeyInput = root.querySelector("#apiKeyInput");
@@ -58,18 +74,18 @@ export async function renderSettings(root, { showModal } = {}) {
 
   validateBtn.addEventListener("click", async () => {
     const key = apiKeyInput.value.trim();
-    validateStatus.textContent = "Validando…";
+    validateStatus.textContent = t("settings.validating");
     validateStatus.className = "";
     saveBtn.disabled = true;
 
     const result = await validateAndListModels(key);
     if (!result.ok) {
       validateStatus.textContent = "";
-      if (showModal) await showModal(`API key inválida: ${result.error}`);
+      if (showModal) await showModal(t("settings.keyInvalid") + result.error);
       return;
     }
 
-    validateStatus.textContent = "Key válida.";
+    validateStatus.textContent = t("settings.keyValid");
     validateStatus.className = "status-ok";
     modelSel.innerHTML = result.models
       .map((m) => `<option value="${escapeHtml(m.id)}">${escapeHtml(m.displayName)}</option>`)
@@ -89,7 +105,7 @@ export async function renderSettings(root, { showModal } = {}) {
       model: modelSel.value,
     };
     await setAiConfig(config);
-    saveStatus.innerHTML = '<span class="saved-badge">Configuración guardada.</span>';
+    saveStatus.innerHTML = `<span class="saved-badge">${t("settings.saved")}</span>`;
   });
 }
 

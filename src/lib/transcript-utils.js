@@ -4,6 +4,7 @@
 export const ECHO_WINDOW_MS = 14000;
 export const ECHO_THRESHOLD = 0.6;
 export const SPEAKER_SLACK_MS = 1500;
+export const SPEAKER_HOLD_MS = 3500;
 
 /* ---------------- Eco ----------------
    El micrófono capta lo que suena por los parlantes, así que la voz de los demás
@@ -53,18 +54,20 @@ export function findEcho(recent, text, source, now = Date.now()) {
 }
 
 /* ---------------- Hablante ----------------
-   `log` = [{name, ts}] en orden: cada entrada marca el momento en que empezó a
-   hablar ese nombre (solo se registran cambios). Un nombre "sigue hablando" hasta
-   la siguiente entrada. Se elige el que más tiempo ocupa la ventana [start,end]. */
+   `log` = [{name, ts}] en orden. El content script emite un heartbeat mientras
+   la atribución sigue vigente. Cada señal dura como máximo SPEAKER_HOLD_MS para
+   que un nombre viejo no se extienda indefinidamente cuando Meet deja de
+   exponer actividad. Se elige el nombre con más solape en [start,end]. */
 
 export function dominantSpeaker(log, start, end, slackMs = SPEAKER_SLACK_MS) {
   if (!Array.isArray(log) || !log.length) return null;
-  const winStart = start;
-  const winEnd = end + slackMs;   // el nombre puede llegar un poco después de la voz
+  const winStart = start - slackMs;
+  const winEnd = end + slackMs;
   const totals = new Map();
   for (let i = 0; i < log.length; i++) {
     const from = log[i].ts;
-    const to = i + 1 < log.length ? log[i + 1].ts : Infinity;
+    const next = i + 1 < log.length ? log[i + 1].ts : Infinity;
+    const to = Math.min(next, from + SPEAKER_HOLD_MS);
     const overlap = Math.min(to, winEnd) - Math.max(from, winStart);
     if (overlap > 0) totals.set(log[i].name, (totals.get(log[i].name) || 0) + overlap);
   }

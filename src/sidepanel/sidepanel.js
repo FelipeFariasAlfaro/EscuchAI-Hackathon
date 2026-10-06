@@ -7,6 +7,7 @@ import { getAiConfig, isConfigured } from "../lib/storage.js";
 import { polishTranscript, generateContent } from "../lib/gemini.js";
 import { findEcho, dominantSpeaker, renderMiniMarkdown } from "../lib/transcript-utils.js";
 import { copyTranscript, exportTxt, exportMd, summarize } from "./actions.js";
+import { t, loadUiLang, setUiLang, applyStaticTranslations } from "../lib/i18n.js";
 
 /* ---------------- Modal helper ---------------- */
 const modalBackdrop = document.getElementById("modalBackdrop");
@@ -58,11 +59,12 @@ const chatSend = document.getElementById("chatSend");
 const MEET_RE = /^https:\/\/meet\.google\.com\//;
 const MIC_PAGE = "src/permissions/mic-permission.html";
 const MAX_SPEAKER_LOG = 500;
+const SPEAKER_LOG_RETENTION_MS = 120000;
 const MAX_RECENT = 12;
 const MAX_POLISH_BACKLOG = 8;
 const MAX_CHAT_CONTEXT_CHARS = 60000;
 const MIC_SPEAKER = "Tú";
-const UNKNOWN_SPEAKER = "Participante Indistinguible";
+function unknownSpeaker() { return t("speaker.unknown"); }
 
 let recording = false;
 let recordingTabId = null;
@@ -79,7 +81,7 @@ let speakerLog = [];
 function setRecordingUI(on) {
   recording = on;
   recBtn.classList.toggle("recording", on);
-  recLabel.textContent = on ? "Grabando" : "Iniciar grabación";
+  recLabel.textContent = on ? t("rec.recording") : t("rec.start");
   langSelect.disabled = on;
 }
 
@@ -105,8 +107,14 @@ chrome.runtime.onMessage.addListener((msg) => {
     handleRawChunk(msg);
   } else if (msg.type === "speaker") {
     if (!msg.name) return;
-    speakerLog.push({ name: msg.name, ts: Date.now() });
-    if (speakerLog.length > MAX_SPEAKER_LOG) speakerLog.shift();
+    const now = Date.now();
+    const detectedAt = Number.isFinite(msg.detectedAt) ? msg.detectedAt : now;
+    speakerLog.push({ name: msg.name, ts: detectedAt, via: msg.via || "unknown" });
+    speakerLog = speakerLog.filter((entry) => entry.ts >= now - SPEAKER_LOG_RETENTION_MS);
+    if (speakerLog.length > MAX_SPEAKER_LOG) speakerLog.splice(0, speakerLog.length - MAX_SPEAKER_LOG);
+  } else if (msg.type === "speaker-status") {
+    console.warn(`[EscuchAI] ${msg.text}`);
+    showStatusLine(msg.text);
   } else if (msg.type === "latency") {
     console.log(`[EscuchAI] latencia ${msg.stage}: ${msg.ms} ms`);
   }
@@ -137,19 +145,14 @@ async function maybeOfferMic() {
   if (micOffered) return;
   await chrome.storage.local.set({ micOffered: true }).catch(() => {});
 
-  const open = await showModal(
-    "Opcional: para transcribir también TU voz, EscuchAI necesita el micrófono. " +
-    "Puedo abrir una pestaña para concederlo. La grabación empieza igual con el audio " +
-    "de la reunión; sin micrófono solo no se transcribe tu propia voz.",
-    { confirm: true }
-  );
+  const open = await showModal(t("mic.offer"), { confirm: true });
   if (open) await chrome.tabs.create({ url: chrome.runtime.getURL(MIC_PAGE) });
 }
 
 async function startRecording() {
   aiConfig = await getAiConfig();
   if (!isConfigured(aiConfig)) {
-    await showModal("Primero debes configurar la IA en la tab Ajustes.");
+    await showModal(t("err.configFirst"));
     activateTab("ajustes");
     return;
   }
@@ -157,7 +160,7 @@ async function startRecording() {
   // La pestaña de Meet se lee ANTES de abrir cualquier otra pestaña.
   const tab = await getActiveTab();
   if (!tab || !MEET_RE.test(tab.url || "")) {
-    await showModal("La grabación solo está disponible en una reunión de Google Meet.");
+    await showModal(t("err.onlyMeetRec"));
     return;
   }
 
@@ -176,23 +179,19 @@ async function startRecording() {
   if (!resp || !resp.ok) {
     const err = resp?.error || "error desconocido";
     if (/not been invoked|activeTab/i.test(err)) {
-      await showModal(
-        "Chrome necesita que actives EscuchAI sobre esta pestaña. " +
-        "Haz clic en el icono de EscuchAI en la barra de extensiones (estando en la pestaña de Meet) " +
-        "y vuelve a pulsar Iniciar grabación."
-      );
+      await showModal(t("err.notInvoked"));
     } else {
-      await showModal(`No se pudo iniciar la grabación: ${err}`);
+      await showModal(t("err.startFailed") + err);
     }
     return;
   }
 
   // El texto de grabaciones anteriores se conserva en pantalla.
-  if (transcript.length) addDivider("Nueva grabación");
+  if (transcript.length) addDivider(t("status.newRecording"));
   recordingTabId = tab.id;
   clearPlaceholder();
   setRecordingUI(true);
-  showStatusLine("Grabando… la primera vez el modelo de transcripción puede tardar en descargarse.");
+  showStatusLine(t("status.recording"));
 
   // Ofrecer el micrófono SIN bloquear: la grabación ya está en marcha.
   maybeOfferMic().catch(() => {});
@@ -206,12 +205,12 @@ async function stopRecording() {
   }).catch(() => {});
   recordingTabId = null;
   setRecordingUI(false);
-  showStatusLine("Grabación detenida.");
+  showStatusLine(t("status.stopped"));
 }
 
 recBtn.addEventListener("click", () => {
   (recording ? stopRecording() : startRecording())
-    .catch((err) => showModal(`Error: ${err.message}`));
+    .catch((err) => showModal(t("err.generic") + err.message));
 });
 
 /* ---------------- Render ---------------- */
@@ -246,7 +245,7 @@ function addDivider(label) {
 function createLineEl(speaker, text) {
   const lineEl = document.createElement("p");
   lineEl.className = "line polishing";
-  if (speaker === UNKNOWN_SPEAKER) lineEl.classList.add("indistinguible");
+  if (speaker === unknownSpeaker()) lineEl.classList.add("indistinguible");
   const sp = document.createElement("span");
   sp.className = "speaker";
   sp.textContent = `${speaker}:`;
@@ -277,7 +276,7 @@ function handleRawChunk(msg) {
 
   const speaker = source === "mic"
     ? MIC_SPEAKER
-    : dominantSpeaker(speakerLog, start, end) || UNKNOWN_SPEAKER;
+    : dominantSpeaker(speakerLog, start, end) || unknownSpeaker();
 
   clearPlaceholder();
   const entry = { speaker, text, ts: msg.ts || now, source, el: createLineEl(speaker, text), removed: false };
@@ -369,13 +368,13 @@ async function sendChat() {
 
   const cfg = await getAiConfig();
   if (!isConfigured(cfg)) {
-    await showModal("Primero debes configurar la IA en la tab Ajustes.");
+    await showModal(t("err.configFirst"));
     activateTab("ajustes");
     return;
   }
   const tab = await getActiveTab();
   if (!tab || !MEET_RE.test(tab.url || "")) {
-    await showModal("El chat solo está disponible en una reunión de Google Meet.");
+    await showModal(t("err.onlyMeetChat"));
     return;
   }
 
@@ -383,14 +382,14 @@ async function sendChat() {
   addChatMsg("user", question);
 
   if (!transcript.length) {
-    addChatMsg("model", "Aún no hay nada transcrito. Inicia la grabación y pregúntame cuando haya conversación.");
+    addChatMsg("model", t("chat.noTranscriptYet"));
     return;
   }
 
   chatBusy = true;
   chatSend.disabled = true;
   chatHistory.push({ role: "user", text: question });
-  const bubble = addChatMsg("model", "Pensando…", "pending");
+  const bubble = addChatMsg("model", t("chat.thinking"), "pending");
   try {
     const res = await generateContent(cfg.apiKey, cfg.model, chatHistory, buildChatSystem());
     if (res.ok && res.text) {
@@ -400,12 +399,12 @@ async function sendChat() {
     } else {
       chatHistory.pop();   // la pregunta no obtuvo respuesta: no contamina el historial
       bubble.className = "chat-msg model error";
-      bubble.textContent = `No se pudo obtener respuesta: ${res.error || "respuesta vacía"}`;
+      bubble.textContent = t("chat.noResponse") + (res.error || t("chat.emptyResponse"));
     }
   } catch (err) {
     chatHistory.pop();
     bubble.className = "chat-msg model error";
-    bubble.textContent = `No se pudo obtener respuesta: ${err.message}`;
+    bubble.textContent = t("chat.noResponse") + err.message;
   } finally {
     chatBusy = false;
     chatSend.disabled = false;
@@ -414,12 +413,12 @@ async function sendChat() {
 }
 
 chatSend.addEventListener("click", () => {
-  sendChat().catch((err) => showModal(`Error: ${err.message}`));
+  sendChat().catch((err) => showModal(t("err.generic") + err.message));
 });
 chatInput.addEventListener("keydown", (ev) => {
   if (ev.key === "Enter" && !ev.shiftKey && !ev.isComposing) {
     ev.preventDefault();
-    sendChat().catch((err) => showModal(`Error: ${err.message}`));
+    sendChat().catch((err) => showModal(t("err.generic") + err.message));
   }
 });
 
@@ -431,7 +430,7 @@ const mdBtn = document.getElementById("mdBtn");
 
 function requireTranscript() {
   if (!transcript.length) {
-    showModal("Aún no hay nada transcrito. Inicia la grabación primero.");
+    showModal(t("err.noTranscript"));
     return false;
   }
   return true;
@@ -442,10 +441,10 @@ copyBtn.addEventListener("click", async () => {
   try {
     await copyTranscript(transcript);
     const prev = copyBtn.innerHTML;
-    copyBtn.textContent = "Copiado";
+    copyBtn.textContent = t("action.copied");
     setTimeout(() => { copyBtn.innerHTML = prev; }, 1500);
   } catch (err) {
-    showModal(`No se pudo copiar: ${err.message}`);
+    showModal(t("err.copyFailed") + err.message);
   }
 });
 
@@ -464,12 +463,12 @@ summarizeBtn.addEventListener("click", async () => {
   if (!requireTranscript() || summarizing) return;
   summarizing = true;
   summarizeBtn.disabled = true;
-  const bubble = addChatMsg("model", "Resumiendo…", "pending");
+  const bubble = addChatMsg("model", t("chat.summarizing"), "pending");
   try {
     const res = await summarize(transcript);
     if (res.needsConfig) {
       bubble.remove();
-      await showModal("Primero debes configurar la IA en la tab Ajustes.");
+      await showModal(t("err.configFirst"));
       activateTab("ajustes");
       return;
     }
@@ -478,11 +477,11 @@ summarizeBtn.addEventListener("click", async () => {
       renderMiniMarkdown(bubble, res.text);
     } else {
       bubble.className = "chat-msg model error";
-      bubble.textContent = `No se pudo resumir: ${res.error || "respuesta vacía"}`;
+      bubble.textContent = t("summary.failed") + (res.error || t("chat.emptyResponse"));
     }
   } catch (err) {
     bubble.className = "chat-msg model error";
-    bubble.textContent = `No se pudo resumir: ${err.message}`;
+    bubble.textContent = t("summary.failed") + err.message;
   } finally {
     summarizing = false;
     summarizeBtn.disabled = false;
@@ -490,9 +489,40 @@ summarizeBtn.addEventListener("click", async () => {
   }
 });
 
-/* ---------------- Render de tabs dinámicas ---------------- */
-initLang();
-renderSettings(document.getElementById("settingsRoot"), { showModal }).catch((err) =>
-  console.error("Error al renderizar Ajustes:", err)
-);
-renderAbout(document.getElementById("aboutRoot"));
+/* ---------------- Selección de idioma (primer uso) ---------------- */
+const langSetupBackdrop = document.getElementById("langSetupBackdrop");
+
+function renderDynamicTabs() {
+  renderSettings(document.getElementById("settingsRoot"), { showModal, onUiLangChange: changeUiLang }).catch((err) =>
+    console.error("Error al renderizar Ajustes:", err)
+  );
+  renderAbout(document.getElementById("aboutRoot"));
+}
+
+// Reaplica todos los textos cuando cambia el idioma de la app (desde Ajustes).
+export async function changeUiLang(newLang) {
+  await setUiLang(newLang);
+  applyStaticTranslations();
+  renderDynamicTabs();
+  // Reflejar en la UI de grabación en curso.
+  recLabel.textContent = recording ? t("rec.recording") : t("rec.start");
+}
+
+langSetupBackdrop.querySelectorAll("[data-setlang]").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    await setUiLang(btn.dataset.setlang);
+    langSetupBackdrop.classList.add("hidden");
+    applyStaticTranslations();
+    renderDynamicTabs();
+  });
+});
+
+/* ---------------- Bootstrap ---------------- */
+(async function bootstrap() {
+  const saved = await loadUiLang();
+  applyStaticTranslations();
+  await initLang();
+  renderDynamicTabs();
+  // Primer uso: pedir el idioma antes de nada.
+  if (!saved) langSetupBackdrop.classList.remove("hidden");
+})();

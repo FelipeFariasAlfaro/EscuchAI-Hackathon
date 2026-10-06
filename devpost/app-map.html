@@ -70,7 +70,7 @@
     </details>
     <details>
       <summary>Cómo se detecta quién habla</summary>
-      <p><span class="path">src/content/meet-speaker.js</span>: tres vías (subtítulos nativos, único acompañante, indicador visual) y la etiqueta de respaldo "Participante Indistinguible".</p>
+      <p><span class="path">src/content/meet-speaker.js</span>: clasifica primero al usuario propio (incluido el marcador <code>(Tú)</code>), conserva cada identidad por <code>participant-id</code> y combina tres vías para el remoto: subtítulos nativos, única contraparte e indicador visual. Emite heartbeats con timestamp, que <span class="path">src/lib/transcript-utils.js</span> cruza con cada ventana de audio sin prolongar nombres antiguos indefinidamente. Si Meet no expone evidencia suficiente, mantiene "Participante Indistinguible".</p>
     </details>
     <details>
       <summary>El prompt del chat o del resumen</summary>
