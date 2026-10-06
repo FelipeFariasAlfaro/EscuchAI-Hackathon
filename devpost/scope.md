@@ -3,43 +3,45 @@ doc: scope
 status: approved
 ---
 
+> **Note:** The build and all planning interactions were done in Spanish. These documents were translated to English only for the judges' convenience; the original work was carried out in Spanish.
+
 # EscuchAI
 
-Extensión de Chrome que transcribe una reunión en vivo desde el audio de la pestaña, lo muestra en un panel lateral y permite preguntarle a una IA sobre la reunión mientras ocurre.
+Chrome extension that transcribes a live meeting from the tab audio, shows it in a side panel, and lets you ask an AI about the meeting while it happens.
 
 ## The Unique Kernel
-La sección de **Transcripción** es el núcleo: texto de la reunión en vivo, con el menor retraso posible, sobre el que puedes **interactuar con la IA en tiempo real**, sin esperar a una transcripción que llega tarde.
+The **Transcript** section is the core: live meeting text, with the least possible delay, that you can **interact with the AI in real time** over, without waiting for a transcript that arrives late.
 
 ## Who It's For
-Para el propio autor, en reuniones de trabajo y estudio. Las reuniones suelen ser en español; para el hackathon también en inglés. Hoy las transcripciones le llegan muy tarde y no puede trabajar con lo que se dice mientras la reunión sigue.
+For the author, in work and study meetings. Meetings are usually in Spanish; for the hackathon, also in English. Today transcripts reach him too late and he can't work with what's being said while the meeting is still going.
 
 ## The Core Loop
-Abre la vista de Transcripción durante una reunión, pulsa Grabar (el botón pasa a rojo con el texto "Grabando"), ve el texto aparecer en vivo y le hace preguntas a la IA sobre lo que se está diciendo.
+Open the Transcript view during a meeting, press Record (the button turns red with the "Recording" text), watch the text appear live, and ask the AI questions about what's being said.
 
 ## Inspiration & Identity
-No establecido. Se define en el PRD. (Dirección volunteered: la tab "Mis datos" es una pantalla de acerca de, con el icono de la app al centro.)
+Not set. Defined in the PRD. (Volunteered direction: the "My data" tab is an about screen, with the app icon centered.)
 
 ## Why This Matters to the Learner
-"Las transcripciones llegan muy tarde y no puedo interactuar con el conocimiento generado en la reunión mientras ocurre." Además, el audio y la transcripción se procesan en su equipo, por seguridad.
+"Transcripts arrive too late and I can't interact with the knowledge generated in the meeting while it happens." Also, audio and transcription are processed on his own machine, for security.
 
 ## What "Working" Looks Like
-Demo de un minuto: abre la vista de Transcripción en una reunión de **Google Meet**, graba una interacción básica, ve el texto aparecer en vivo, y le hace preguntas a la IA (**Gemini**) sobre esa interacción y recibe respuestas basadas en lo dicho.
+One-minute demo: open the Transcript view in a **Google Meet** meeting, record a basic interaction, watch the text appear live, and ask the AI (**Gemini**) questions about that interaction and get answers based on what was said.
 
 ## The POC Boundary
-- Solo Google Meet.
-- Botón Grabar/Grabando y transcripción en vivo (español e inglés).
-- Chat con la IA sobre la reunión, con Gemini.
-- Configuración mínima de Gemini para que el chat funcione (API key, validar, elegir modelo, guardar).
-- Identificar quién habla, leyendo el DOM de Meet: **pendiente, se resuelve en `3-prd` / `4-spec`** (decidir si entra en la prueba de concepto o pasa a "Después", según la viabilidad técnica).
-- Todo se guarda solo localmente en el navegador. Lo único que sale del equipo es el texto que se envía a la IA.
+- Google Meet only.
+- Record/Recording button and live transcription (Spanish and English).
+- Chat with the AI about the meeting, using Gemini.
+- Minimal Gemini configuration so the chat works (API key, validate, choose model, save).
+- Identify who is speaking by reading the Meet DOM: **pending, resolved in `3-prd` / `4-spec`** (decide whether it enters the proof of concept or moves to "Later", based on technical feasibility).
+- Everything is stored only locally in the browser. The only thing that leaves the machine is the text sent to the AI.
 
 ## Later
-- Sub-tabs Tareas, Conflictos, Participación (% por participante) y Alertas (palabras configurables, quién y en qué minuto).
-- Resumen, copiar y exportar TXT/MD.
-- Tab Historial: buscar por título o fecha, modal al abrir, borrar con confirmación.
-- Proveedores OpenAI, Claude y Ollama (local).
-- Tab Mis datos: icono, título, versión, nombre, email, LinkedIn, GitHub y repositorio.
-- Teams, Skype y Discord.
+- Sub-tabs Tasks, Conflicts, Participation (% per participant), and Alerts (configurable words, who and at what minute).
+- Summarize, copy, and export TXT/MD.
+- History tab: search by title or date, modal on open, delete with confirmation.
+- OpenAI, Claude, and Ollama (local) providers.
+- My data tab: icon, title, version, name, email, LinkedIn, GitHub, and repository.
+- Teams, Skype, and Discord.
 
 ## Explicitly Cut
-Nada por ahora. Todo lo mencionado queda en "Later".
+Nothing for now. Everything mentioned stays in "Later".

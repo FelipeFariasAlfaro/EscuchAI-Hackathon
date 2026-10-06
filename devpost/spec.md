@@ -3,165 +3,167 @@ doc: spec
 status: approved
 ---
 
-# EscuchAI — Spec Técnico
+> **Note:** The build and all planning interactions were done in Spanish. These documents were translated to English only for the judges' convenience; the original work was carried out in Spanish.
+
+# EscuchAI — Technical Spec
 
 ## How This Works, In Plain Language
-EscuchAI es una extensión de Chrome (Manifest V3) que vive en el **side panel** del navegador. Cuando estás en una pestaña de Google Meet y pulsas Grabar, la extensión toma el audio de esa pestaña y lo convierte en texto en tu propio equipo, sin enviar el audio a ningún servidor. Luego cada bloque de texto se manda a Gemini solo para pulirlo (puntuación, mayúsculas, correcciones) y se muestra como una línea con el nombre de quien habló. Abajo tienes un chat donde le preguntas a Gemini sobre lo dicho, con toda la transcripción disponible como contexto.
+EscuchAI is a Chrome extension (Manifest V3) that lives in the browser **side panel**. When you're on a Google Meet tab and press Record, the extension takes that tab's audio and turns it into text on your own machine, without sending the audio to any server. Each text block is then sent to Gemini only to polish it (punctuation, capitalization, corrections) and is shown as a line with the speaker's name. Below you have a chat where you ask Gemini about what was said, with the whole available transcript as context.
 
-La extensión tiene cuatro piezas, porque Manifest V3 obliga a repartir el trabajo:
+The extension has four pieces, because Manifest V3 forces the work to be split:
 
-- **Side panel** — la interfaz (tus tabs y sub-tabs del mock). Es lo que ves y con lo que interactúas.
-- **Service worker** — el coordinador. Arranca la captura de audio de la pestaña y pasa mensajes entre las piezas. En MV3 no puede correr código pesado ni usar APIs de audio por mucho tiempo, por eso delega.
-- **Offscreen document** — una página oculta donde corre Whisper (el modelo de transcripción) sobre el audio capturado. MV3 no permite hacer esto en el service worker, así que se usa este documento.
-- **Content script** — se inyecta en la página de Meet y lee el DOM para saber quién está hablando en cada momento.
+- **Side panel** — the interface (your tabs and sub-tabs from the mock). It's what you see and interact with.
+- **Service worker** — the coordinator. It starts the tab audio capture and passes messages between the pieces. In MV3 it can't run heavy code or use audio APIs for long, so it delegates.
+- **Offscreen document** — a hidden page where Whisper (the transcription model) runs over the captured audio. MV3 doesn't allow doing this in the service worker, so this document is used.
+- **Content script** — injected into the Meet page, it reads the DOM to know who's speaking at each moment.
 
-El audio nunca sale de tu equipo. Lo único que viaja a Gemini es texto: los bloques a pulir y tus preguntas del chat. La configuración (proveedor, API key, modelo) se guarda en el almacenamiento local de la extensión.
+The audio never leaves your machine. The only thing that travels to Gemini is text: the blocks to polish and your chat questions. The configuration (provider, API key, model) is stored in the extension's local storage.
 
 ## The Core Journey Through the System
-Implementa `prd.md > The Core Journey`.
+Implements `prd.md > The Core Journey`.
 
-1. Abres el side panel en una pestaña de Meet. El panel pregunta al service worker si hay IA configurada.
-2. Pulsas **Iniciar grabación**. Si no hay Gemini configurado → modal "configura la IA primero". Si la pestaña no es Meet → aviso "solo disponible en Google Meet".
-3. El service worker llama a `chrome.tabCapture` para obtener el stream de audio de la pestaña y lo entrega al **offscreen document**.
-4. El offscreen document corta el audio en bloques y los pasa por **Whisper (transformers.js)** → texto crudo del bloque.
-5. Ese texto crudo se envía a **Gemini** (endpoint `generateContent`) para pulirlo → texto final del bloque.
-6. En paralelo, el **content script** en Meet reporta quién tenía el indicador de "hablando" durante ese bloque. Si no hay dato → "Participante Indistinguible".
-7. El side panel muestra la línea `Nombre: frase pulida`. El botón está en estado rojo "Grabando".
-8. Escribes una pregunta en el chat → se envía a Gemini junto con toda la transcripción acumulada → la respuesta se añade al chat (con historial).
-9. **Éxito:** líneas en vivo con nombre + respuestas de IA basadas en lo dicho.
+1. You open the side panel on a Meet tab. The panel asks the service worker whether AI is configured.
+2. You press **Start recording**. If Gemini isn't configured → modal "configure the AI first". If the tab isn't Meet → notice "only available in Google Meet".
+3. The service worker calls `chrome.tabCapture` to get the tab's audio stream and hands it to the **offscreen document**.
+4. The offscreen document cuts the audio into blocks and runs them through **Whisper (transformers.js)** → raw block text.
+5. That raw text is sent to **Gemini** (`generateContent` endpoint) to polish it → final block text.
+6. In parallel, the **content script** in Meet reports who had the "speaking" indicator during that block. If there's no data → "Unrecognized participant".
+7. The side panel shows the `Name: polished sentence` line. The button is in the red "Recording" state.
+8. You type a question in the chat → it's sent to Gemini along with the whole accumulated transcript → the answer is appended to the chat (with history).
+9. **Success:** live lines with names + AI answers based on what was said.
 
 ## Stack
 - **Manifest V3 Chrome Extension** (JavaScript). Docs: https://developer.chrome.com/docs/extensions/develop
-- **`chrome.tabCapture`** para el audio de la pestaña. Docs: https://developer.chrome.com/docs/extensions/reference/api/tabCapture
-- **`chrome.offscreen`** para correr Whisper fuera del service worker. Docs: https://developer.chrome.com/docs/extensions/reference/api/offscreen
-- **`chrome.sidePanel`** para la UI. Docs: https://developer.chrome.com/docs/extensions/reference/api/sidePanel
-- **transformers.js (Hugging Face)** con un modelo Whisper (p. ej. `Xenova/whisper-base` o `whisper-tiny` para menos peso/latencia). WebGPU si está disponible, con respaldo WASM. Docs: https://huggingface.co/docs/transformers.js · WebGPU: https://huggingface.co/docs/transformers.js/guides/webgpu · Referencia: https://github.com/xenova/whisper-web
-- **Gemini API** (`v1beta`), llamada REST directa con la API key del usuario. Docs: https://ai.google.dev/api/models · https://ai.google.dev/gemini-api/docs
-- **Sin framework de UI**: HTML/CSS/JS plano, acorde al mock. Mantiene el build pequeño.
+- **`chrome.tabCapture`** for the tab audio. Docs: https://developer.chrome.com/docs/extensions/reference/api/tabCapture
+- **`chrome.offscreen`** to run Whisper outside the service worker. Docs: https://developer.chrome.com/docs/extensions/reference/api/offscreen
+- **`chrome.sidePanel`** for the UI. Docs: https://developer.chrome.com/docs/extensions/reference/api/sidePanel
+- **transformers.js (Hugging Face)** with a Whisper model (e.g. `Xenova/whisper-base` or `whisper-tiny` for less weight/latency). WebGPU if available, with WASM fallback. Docs: https://huggingface.co/docs/transformers.js · WebGPU: https://huggingface.co/docs/transformers.js/guides/webgpu · Reference: https://github.com/xenova/whisper-web
+- **Gemini API** (`v1beta`), direct REST call with the user's API key. Docs: https://ai.google.dev/api/models · https://ai.google.dev/gemini-api/docs
+- **No UI framework**: plain HTML/CSS/JS, matching the mock. Keeps the build small.
 
-Rationale de las decisiones del usuario:
-- **Whisper local + pulido con Gemini por bloque**: cumple "audio en el equipo" (Whisper es local) y mejora la calidad del texto. Tradeoff aceptado: latencia por línea = Whisper + ida/vuelta a Gemini, y muchas llamadas a Gemini durante la grabación (posibles rate limits del plan gratuito).
-- **IA obligatoria para grabar**: como el pulido pasa por Gemini, no tiene sentido grabar sin IA configurada.
+Rationale for the user's decisions:
+- **Local Whisper + Gemini polishing per block**: meets "audio on the machine" (Whisper is local) and improves text quality. Accepted tradeoff: per-line latency = Whisper + round-trip to Gemini, and many Gemini calls during recording (possible free-plan rate limits).
+- **AI required to record**: since polishing goes through Gemini, recording without AI configured makes no sense.
 
-Sin verificar en vivo, a confirmar temprano en el build: versión exacta de transformers.js y el modelo Whisper que mejor equilibra latencia/calidad; comportamiento de `tabCapture` + offscreen en la versión de Chrome del usuario.
+Not verified live, to confirm early in the build: exact transformers.js version and the Whisper model that best balances latency/quality; `tabCapture` + offscreen behavior in the user's Chrome version.
 
 ## Where It Runs and How Someone Tries It
-- **Runtime:** Chrome de escritorio (idealmente con WebGPU; WASM como respaldo). Requiere una API key de Gemini.
-- **Instalación:** `chrome://extensions` → activar modo desarrollador → "Cargar descomprimida" → seleccionar la carpeta del proyecto.
-- **Uso / grabación de la demo:** abrir una reunión de Google Meet, abrir el side panel de EscuchAI, ir a Ajustes y configurar Gemini (key → validar → elegir modelo → guardar), volver a Reunión, pulsar Iniciar grabación, hablar, ver las líneas aparecer, y hacerle una pregunta a la IA.
-- **Despliegue:** no aplica. El entregable es el video de demo + el repositorio público en GitHub. La extensión corre en local.
+- **Runtime:** desktop Chrome (ideally with WebGPU; WASM as fallback). Requires a Gemini API key.
+- **Install:** `chrome://extensions` → enable developer mode → "Load unpacked" → select the project folder.
+- **Use / recording the demo:** open a Google Meet meeting, open the EscuchAI side panel, go to Settings and configure Gemini (key → validate → choose model → save), go back to Meeting, press Start recording, talk, watch the lines appear, and ask the AI a question.
+- **Deployment:** not applicable. The deliverable is the demo video + the public GitHub repository. The extension runs locally.
 
 ## Look and Feel
-Carga desde `prd.md > Look and Feel` (basado en el mock del usuario):
-- Tema oscuro, fondo azul-grisáceo (~`#1a2130` / `#0f1420`).
-- Acento turquesa/cian (~`#39c0c8`) para botones y la tab/sub-tab activa.
-- Botón de grabación: estado normal en acento; estado activo en **rojo** con punto rojo y texto "Grabando".
-- Tipografía sans-serif del sistema; placeholders en itálica atenuada.
-- Panel vertical angosto; tab activa subrayada.
-- CSS plano, sin framework.
+Loads from `prd.md > Look and Feel` (based on the user's mock):
+- Dark theme, blue-gray background (~`#1a2130` / `#0f1420`).
+- Turquoise/cyan accent (~`#39c0c8`) for buttons and the active tab/sub-tab.
+- Record button: normal state in accent; active state in **red** with a red dot and "Recording" text.
+- System sans-serif typography; placeholders in muted italics.
+- Narrow vertical panel; active tab underlined.
+- Plain CSS, no framework.
 
 ## Components
 
 ### Side Panel UI
-La interfaz: tabs (Reunión, Historial, Ajustes, Sobre), sub-tabs de Reunión, área de transcripción, fila de acciones (deshabilitadas) y caja de chat. Las sub-tabs Tareas/Conflictos/Participación/Alertas y los botones Resumir/Copiar/TXT/MD se renderizan deshabilitados ("Próximamente").
-PRD ref: `prd.md > Screens and Layout`, `prd.md > Grabación y transcripción en vivo`, `prd.md > Chat con la IA sobre la reunión`.
+The interface: tabs (Meeting, History, Settings, About), Meeting sub-tabs, transcript area, actions row (disabled), and chat box. The Tasks/Conflicts/Participation/Alerts sub-tabs and the Summarize/Copy/TXT/MD buttons are rendered disabled ("Coming soon").
+PRD ref: `prd.md > Screens and Layout`, `prd.md > Live recording and transcription`, `prd.md > AI chat about the meeting`.
 
-### Service Worker (coordinador)
-Escucha el botón Grabar, verifica que la pestaña sea Meet y que haya IA configurada, lanza `chrome.tabCapture`, crea el offscreen document y enruta mensajes entre side panel ↔ offscreen ↔ content script.
-PRD ref: `prd.md > Grabación y transcripción en vivo`, `prd.md > States and Boundaries`.
+### Service Worker (coordinator)
+Listens for the Record button, checks that the tab is Meet and that AI is configured, launches `chrome.tabCapture`, creates the offscreen document, and routes messages between side panel ↔ offscreen ↔ content script.
+PRD ref: `prd.md > Live recording and transcription`, `prd.md > States and Boundaries`.
 
-### Offscreen Document (transcripción)
-Recibe el stream de audio, lo corta en bloques, corre Whisper (transformers.js) sobre cada bloque y devuelve el texto crudo. Carga el modelo una vez (descarga inicial, luego caché).
-PRD ref: `prd.md > Grabación y transcripción en vivo`.
+### Offscreen Document (transcription)
+Receives the audio stream, cuts it into blocks, runs Whisper (transformers.js) over each block, and returns the raw text. Loads the model once (initial download, then cache).
+PRD ref: `prd.md > Live recording and transcription`.
 
-### Content Script (hablante en Meet)
-Inyectado en `meet.google.com`. Observa el DOM para detectar el participante con indicador de "hablando" y lo reporta con marca de tiempo. Mejor esfuerzo; fallback "Participante Indistinguible".
-PRD ref: `prd.md > Grabación y transcripción en vivo` (nombre por línea).
+### Content Script (speaker in Meet)
+Injected into `meet.google.com`. Watches the DOM to detect the participant with the "speaking" indicator and reports it with a timestamp. Best effort; fallback "Unrecognized participant".
+PRD ref: `prd.md > Live recording and transcription` (name per line).
 
 ### Gemini Client
-Módulo compartido con dos usos: (a) pulir cada bloque de texto, (b) responder el chat con la transcripción como contexto. También valida la key y lista modelos en Ajustes.
-PRD ref: `prd.md > Chat con la IA sobre la reunión`, `prd.md > Configuración de IA (Ajustes)`.
+Shared module with two uses: (a) polish each text block, (b) answer the chat with the transcript as context. Also validates the key and lists models in Settings.
+PRD ref: `prd.md > AI chat about the meeting`, `prd.md > AI configuration (Settings)`.
 
 ### Settings / Storage
-Flujo de Ajustes (proveedor → key → validar → modelos → elegir → guardar) y persistencia en `chrome.storage.local`.
-PRD ref: `prd.md > Configuración de IA (Ajustes)`, `prd.md > States and Boundaries` (persistencia).
+Settings flow (provider → key → validate → models → choose → save) and persistence in `chrome.storage.local`.
+PRD ref: `prd.md > AI configuration (Settings)`, `prd.md > States and Boundaries` (persistence).
 
 ## Data Model
-Datos en `chrome.storage.local` (persisten entre sesiones, nunca en la nube):
+Data in `chrome.storage.local` (persists across sessions, never in the cloud):
 ```
 aiConfig = {
   provider: "gemini",
   apiKey: "<string>",
-  model: "<modelId elegido>"
+  model: "<chosen modelId>"
 }
 ```
-Datos en memoria durante la sesión (se pierden al cerrar; no se persisten transcripciones en la PoC):
+In-memory data during the session (lost on close; transcripts are not persisted in the POC):
 ```
-transcript = [ { speaker: "Nombre" | "Participante Indistinguible", text: "...", ts } ]
+transcript = [ { speaker: "Name" | "Unrecognized participant", text: "...", ts } ]
 chatHistory = [ { role: "user" | "model", text: "..." } ]
 ```
-- **aiConfig**: se escribe al guardar en Ajustes; se lee al abrir el panel y antes de grabar.
-- **transcript / chatHistory**: viven mientras el panel esté abierto. (El historial persistente es "Después".)
+- **aiConfig**: written when saving in Settings; read when opening the panel and before recording.
+- **transcript / chatHistory**: live while the panel is open. (Persistent history is "Later".)
 
 ## File Structure
 ```
 escuchai-2/
-├── manifest.json              # MV3: permisos (tabCapture, offscreen, sidePanel, storage), host meet.google.com
+├── manifest.json              # MV3: permissions (tabCapture, offscreen, sidePanel, storage), host meet.google.com
 ├── src/
 │   ├── sidepanel/
-│   │   ├── sidepanel.html      # UI del mock
-│   │   ├── sidepanel.css       # tema oscuro + acento turquesa
-│   │   └── sidepanel.js        # tabs, render de transcripción, chat
+│   │   ├── sidepanel.html      # mock UI
+│   │   ├── sidepanel.css       # dark theme + turquoise accent
+│   │   └── sidepanel.js        # tabs, transcript render, chat
 │   ├── background/
-│   │   └── service-worker.js   # coordinador, tabCapture, routing de mensajes
+│   │   └── service-worker.js   # coordinator, tabCapture, message routing
 │   ├── offscreen/
 │   │   ├── offscreen.html
-│   │   └── offscreen.js        # Whisper (transformers.js), bloques de audio
+│   │   └── offscreen.js        # Whisper (transformers.js), audio blocks
 │   ├── content/
-│   │   └── meet-speaker.js      # lee el DOM de Meet, reporta hablante
+│   │   └── meet-speaker.js      # reads the Meet DOM, reports speaker
 │   └── lib/
-│       ├── gemini.js            # validar key, listar modelos, pulir, chat
-│       └── storage.js           # wrapper de chrome.storage.local
+│       ├── gemini.js            # validate key, list models, polish, chat
+│       └── storage.js           # chrome.storage.local wrapper
 ├── vendor/
-│   └── transformers.min.js      # transformers.js (o import vía CDN con fallback)
+│   └── transformers.min.js      # transformers.js (or CDN import with fallback)
 ├── assets/
 │   └── icon.png
-├── devpost/                     # workspace de planificación
+├── devpost/                     # planning workspace
 └── README.md
 ```
 
 ## External Services and Dependencies
 
 ### Gemini API
-- **Validar key + listar modelos:** `GET https://generativelanguage.googleapis.com/v1beta/models` con header `x-goog-api-key: <API_KEY>`. Respuesta: lista de modelos con `name`, límites y capacidades. Éxito ⇒ key válida; error 400/403 ⇒ key inválida (modal). Docs: https://ai.google.dev/api/models
-- **Pulir bloque y chat:** `POST https://generativelanguage.googleapis.com/v1beta/models/<model>:generateContent` con `x-goog-api-key` y cuerpo `{ contents: [...] }`. Docs: https://ai.google.dev/gemini-api/docs
-- **Key:** la provee el usuario. **Rate limits:** el plan gratuito tiene límites por minuto; el pulido por bloque puede acercarse a ellos. **Coste:** gratuito dentro de la cuota.
+- **Validate key + list models:** `GET https://generativelanguage.googleapis.com/v1beta/models` with header `x-goog-api-key: <API_KEY>`. Response: list of models with `name`, limits, and capabilities. Success ⇒ valid key; 400/403 error ⇒ invalid key (modal). Docs: https://ai.google.dev/api/models
+- **Polish block and chat:** `POST https://generativelanguage.googleapis.com/v1beta/models/<model>:generateContent` with `x-goog-api-key` and body `{ contents: [...] }`. Docs: https://ai.google.dev/gemini-api/docs
+- **Key:** provided by the user. **Rate limits:** the free plan has per-minute limits; per-block polishing may approach them. **Cost:** free within the quota.
 
 ### transformers.js (Whisper)
-- Librería cliente, sin servicio externo. Descarga el modelo Whisper (cientos de MB) la primera vez desde Hugging Face Hub; luego queda en caché del navegador. Docs: https://huggingface.co/docs/transformers.js
+- Client library, no external service. Downloads the Whisper model (hundreds of MB) the first time from the Hugging Face Hub; then kept in the browser cache. Docs: https://huggingface.co/docs/transformers.js
 
 ## Important Failure Modes
-- **Selectores del DOM de Meet cambian / no detecta hablante** → la línea usa "Participante Indistinguible". Validar temprano en el build.
-- **Gemini lento o rate-limited al pulir** → mostrar la línea en estado "puliendo…" y, si falla, caer al texto crudo de Whisper para no perder la frase. (Mínimo: mensaje de error visible.)
-- **El modelo Whisper tarda en descargar/cargar** → mostrar estado "cargando modelo…" al iniciar la grabación la primera vez.
-- **API key inválida** → modal de error en Ajustes.
-- **WebGPU no disponible** → transformers.js cae a WASM (más lento). Validar en el equipo del usuario.
+- **Meet DOM selectors change / speaker not detected** → the line uses "Unrecognized participant". Validate early in the build.
+- **Gemini slow or rate-limited when polishing** → show the line in a "polishing…" state and, if it fails, fall back to Whisper's raw text so the sentence isn't lost. (Minimum: visible error message.)
+- **The Whisper model takes a while to download/load** → show a "loading model…" state when starting the recording the first time.
+- **Invalid API key** → error modal in Settings.
+- **WebGPU not available** → transformers.js falls back to WASM (slower). Validate on the user's machine.
 
 ## What Was Simplified and Why
-- **Sin persistencia de transcripciones** (viven en memoria) en vez de un historial local navegable — el Historial es "Después" en el PRD. La versión completa requeriría guardar y buscar grabaciones.
-- **Solo Gemini y solo Meet** — un proveedor y una plataforma para que el build quepa en la PoC. Los demás proveedores y plataformas son "Después".
-- **UI sin framework** — HTML/CSS/JS plano, suficiente para el mock y más rápido de construir.
+- **No transcript persistence** (they live in memory) instead of a browsable local history — History is "Later" in the PRD. The full version would require storing and searching recordings.
+- **Gemini only and Meet only** — one provider and one platform so the build fits in the POC. The other providers and platforms are "Later".
+- **No-framework UI** — plain HTML/CSS/JS, enough for the mock and faster to build.
 
 ## Decisions and Open Issues
-Decisiones del usuario:
-- **Whisper local + pulido con Gemini por bloque** (no diferido). Tradeoff aceptado: mayor latencia por línea y más llamadas a Gemini.
-- **IA configurada obligatoria para grabar.**
-- **Nombre del hablante por DOM de Meet, mejor esfuerzo, con fallback.**
-- **Reparto en 4 piezas** (side panel, service worker, offscreen, content script).
+User decisions:
+- **Local Whisper + Gemini polishing per block** (not deferred). Accepted tradeoff: higher per-line latency and more Gemini calls.
+- **AI configuration required to record.**
+- **Speaker name via Meet DOM, best effort, with fallback.**
+- **Split into 4 pieces** (side panel, service worker, offscreen, content script).
 
-Incertidumbre genuina del usuario (su objetivo de aprendizaje = que las restricciones técnicas salgan en el spec, no en el código): **si Whisper-WASM en el navegador puede dar un "en vivo" aceptable encadenado con el pulido de Gemini.** Cómo se verifica: en el primer paso del build se mide la latencia real de un bloque end-to-end; si es demasiado alta, el plan B registrado es usar `whisper-tiny`, bloques más cortos, o diferir el pulido a bajo demanda.
+Genuine user uncertainty (their learning goal = having the technical constraints surface in the spec, not in the code): **whether Whisper-WASM in the browser can give an acceptable "live" feel chained with Gemini polishing.** How it's verified: in the first build step the real end-to-end latency of a block is measured; if it's too high, the recorded plan B is to use `whisper-tiny`, shorter blocks, or defer polishing to on-demand.
 
-Abierto para el build:
-- Confirmar selectores reales del DOM de Meet para el hablante.
-- Elegir modelo Whisper concreto según latencia/calidad medidas.
-- **Tab Sobre:** entra en la PoC (confirmado por el usuario). Pantalla estática: icono, título, versión, nombre, email, LinkedIn, GitHub, link al repositorio.
+Open for the build:
+- Confirm the real Meet DOM selectors for the speaker.
+- Choose a concrete Whisper model based on measured latency/quality.
+- **About tab:** enters the POC (confirmed by the user). Static screen: icon, title, version, name, email, LinkedIn, GitHub, link to the repository.

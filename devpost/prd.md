@@ -3,134 +3,136 @@ doc: prd
 status: approved
 ---
 
-# EscuchAI — Requisitos del Producto
+> **Note:** The build and all planning interactions were done in Spanish. These documents were translated to English only for the judges' convenience; the original work was carried out in Spanish.
 
-Extensión de Chrome que transcribe una reunión de Google Meet en vivo y permite preguntarle a Gemini sobre lo que se dice, mientras ocurre. Para el propio autor, en reuniones de trabajo y estudio.
-Fuente: `scope.md > The Unique Kernel`, `scope.md > The Core Loop`.
+# EscuchAI — Product Requirements
+
+Chrome extension that transcribes a live Google Meet meeting and lets you ask Gemini about what's being said, while it happens. For the author, in work and study meetings.
+Source: `scope.md > The Unique Kernel`, `scope.md > The Core Loop`.
 
 ## The Core Journey
-Desarrolla `scope.md > The Core Loop` y `scope.md > What "Working" Looks Like`.
+Develops `scope.md > The Core Loop` and `scope.md > What "Working" Looks Like`.
 
-1. El usuario está en una reunión de Google Meet y abre el panel de EscuchAI.
-2. Ve la tab **Reunión** activa, con el botón **Iniciar grabación**, las sub-tabs (Transcripción activa) y el área de transcripción con el texto "La transcripción aparecerá aquí al iniciar la grabación."
-3. Pulsa **Iniciar grabación**. El botón pasa a rojo con el texto **"Grabando"** y un punto rojo.
-4. A medida que la gente habla, aparecen líneas de transcripción en vivo, cada una con el nombre de quien habla: `Nombre: frase`.
-5. El usuario escribe una pregunta en la caja de chat de abajo (por ejemplo "resume lo que dijo Pepito sobre el sistema X") y la envía.
-6. La IA (Gemini) recibe toda la transcripción disponible hasta ese momento y responde. La respuesta se añade al chat, que conserva el historial.
-7. El usuario puede seguir preguntando mientras la grabación sigue activa, usando lo que haya transcrito hasta cada momento.
-8. **Éxito:** el usuario ve texto en vivo con nombres y obtiene respuestas de la IA basadas en lo dicho, sin esperar a una transcripción posterior. Demostrable en un minuto en pantalla.
+1. The user is in a Google Meet meeting and opens the EscuchAI panel.
+2. They see the **Meeting** tab active, with the **Start recording** button, the sub-tabs (Transcript active), and the transcript area with the text "The transcript will appear here once you start recording."
+3. They press **Start recording**. The button turns red with the text **"Recording"** and a red dot.
+4. As people speak, live transcript lines appear, each with the speaker's name: `Name: sentence`.
+5. The user types a question in the chat box below (e.g. "summarize what Pepito said about system X") and sends it.
+6. The AI (Gemini) receives the whole transcript available up to that point and answers. The answer is appended to the chat, which keeps its history.
+7. The user can keep asking while recording is still active, using whatever has been transcribed at each moment.
+8. **Success:** the user sees live text with names and gets AI answers based on what was said, without waiting for a later transcript. Demonstrable in one minute on screen.
 
 ## Screens and Layout
-Cuatro tabs principales en la cabecera, junto al icono de micrófono y el nombre "EscuchAI": **Reunión**, **Historial**, **Ajustes**, **Sobre**.
+Four main tabs in the header, next to the microphone icon and the "EscuchAI" name: **Meeting**, **History**, **Settings**, **About**.
 
-### Reunión (única tab funcional en la PoC)
-- Arriba: botón **Iniciar grabación** / **Grabando** (con punto que pasa a rojo al grabar).
-- Sub-tabs: **Transcripción** (funcional), **Tareas**, **Conflictos**, **Participación**, **Alertas** (visibles pero deshabilitadas / "Próximamente").
-- Centro: área de transcripción en vivo. Placeholder antes de grabar.
-- Abajo (fila de acciones): **Resumir**, **Copiar**, **TXT**, **MD** (activadas en la PoC por decisión en la revisión final; ver `checklist.md > Revisions`). Copiar/TXT/MD son locales y exportan solo la transcripción; Resumir usa Gemini y muestra el resumen en el flujo.
-- Pie: caja de **chat con la IA** con placeholder y botón de enviar.
+### Meeting (the only functional tab in the POC)
+- Top: **Start recording** / **Recording** button (with a dot that turns red when recording).
+- Sub-tabs: **Transcript** (functional), **Tasks**, **Conflicts**, **Participation**, **Alerts** (visible but disabled / "Coming soon").
+- Center: live transcript area. Placeholder before recording.
+- Bottom (actions row): **Summarize**, **Copy**, **TXT**, **MD** (enabled in the POC by a decision in the final review; see `checklist.md > Revisions`). Copy/TXT/MD are local and export only the transcript; Summarize uses Gemini and shows the summary in the flow.
+- Footer: **AI chat** box with placeholder and a send button.
 
-### Ajustes
-Flujo de configuración de IA. En la PoC solo **Gemini**: elegir proveedor, ingresar API key, **validar**, obtener modelos disponibles, elegir modelo, **guardar**.
+### Settings
+AI configuration flow. In the POC, only **Gemini**: choose provider, enter API key, **validate**, fetch available models, choose model, **save**.
 
-### Historial y Sobre
-Visibles como tabs. Historial queda diferido (ver más abajo). **Sobre** entra en la PoC: pantalla estática con el icono de la app al centro, título y versión, nombre, email, LinkedIn, GitHub y link al repositorio.
+### History and About
+Visible as tabs. History is deferred (see below). **About** enters the POC: static screen with the app icon centered, title and version, name, email, LinkedIn, GitHub, and a link to the repository.
 
 ## Look and Feel
-Tomado del mock aportado por el usuario:
-- Tema **oscuro** (fondo azul-grisáceo oscuro).
-- Color de **acento turquesa / cian** para botones y elementos activos.
-- Botón de grabación: estado normal en acento claro; estado activo en **rojo** con texto "Grabando".
-- Tipografía **sans-serif** limpia; texto de placeholder en itálica y color atenuado.
-- Layout de panel vertical angosto (panel lateral de extensión).
-- Tabs con subrayado en la activa.
+Taken from the mock provided by the user:
+- **Dark** theme (dark blue-gray background).
+- **Turquoise / cyan accent** color for buttons and active elements.
+- Record button: normal state in light accent; active state in **red** with "Recording" text.
+- Clean **sans-serif** typography; placeholder text in italics and a muted color.
+- Narrow vertical panel layout (extension side panel).
+- Tabs with an underline on the active one.
 
 ## Features and Behavior
 
-### Grabación y transcripción en vivo
-Desarrolla `scope.md > The Core Loop`.
-- El usuario inicia y detiene la grabación con el botón superior.
-- Al grabar, el botón muestra "Grabando" en rojo con punto rojo.
-- El audio de la pestaña de Meet se transcribe en el equipo del usuario (ES e inglés).
-- Cada frase se muestra como una línea `Nombre: frase`.
-- El nombre de quien habla se obtiene leyendo el DOM de Meet (indicador de participante activo) y se cruza con el momento de la transcripción. La atribución es **aproximada** y se acepta como suficiente para la PoC.
-- Si no se puede determinar el hablante en ese momento, la línea se atribuye a **"Participante Indistinguible"**.
+### Live recording and transcription
+Develops `scope.md > The Core Loop`.
+- The user starts and stops recording with the top button.
+- When recording, the button shows "Recording" in red with a red dot.
+- The Meet tab audio is transcribed on the user's machine (ES and English).
+- Each sentence is shown as a `Name: sentence` line.
+- The speaker's name is obtained by reading the Meet DOM (active participant indicator) and cross-referenced with the transcript moment. Attribution is **approximate** and accepted as sufficient for the POC.
+- If the speaker can't be determined at that moment, the line is attributed to **"Unrecognized participant"**.
 
 Acceptance criteria:
-- [ ] Al pulsar Iniciar grabación, el botón cambia a rojo con "Grabando".
-- [ ] Mientras alguien habla, aparecen líneas de texto nuevas con el formato `Nombre: frase`.
-- [ ] Cuando no hay nombre disponible, la línea usa "Participante Indistinguible".
-- [ ] La transcripción funciona con audio en español e inglés.
+- [ ] When Start recording is pressed, the button changes to red with "Recording".
+- [ ] While someone speaks, new text lines appear in the format `Name: sentence`.
+- [ ] When no name is available, the line uses "Unrecognized participant".
+- [ ] Transcription works with Spanish and English audio.
 
-### Chat con la IA sobre la reunión
-Desarrolla `scope.md > The Unique Kernel`.
-- El usuario escribe una pregunta y la envía.
-- La IA recibe **toda la transcripción disponible** hasta ese momento como contexto.
-- Se puede preguntar **mientras sigue grabando**, usando lo transcrito hasta entonces.
-- El chat conserva **historial**: los mensajes nuevos se añaden sin borrar los anteriores.
-- Proveedor en la PoC: **Gemini**.
-
-Acceptance criteria:
-- [ ] Enviar una pregunta añade la pregunta y la respuesta al chat sin borrar mensajes previos.
-- [ ] La respuesta refleja contenido de la transcripción (p. ej. preguntar por lo que dijo una persona concreta).
-- [ ] Se puede enviar una pregunta durante la grabación.
-
-### Configuración de IA (Ajustes)
-Desarrolla `scope.md > The POC Boundary`.
-- Flujo: elegir Gemini → ingresar API key → validar → cargar modelos disponibles → elegir modelo → guardar.
-- La API key y la configuración se guardan en **local storage** y persisten entre sesiones.
+### AI chat about the meeting
+Develops `scope.md > The Unique Kernel`.
+- The user types a question and sends it.
+- The AI receives **the whole transcript available** up to that point as context.
+- You can ask **while still recording**, using what's been transcribed so far.
+- The chat keeps **history**: new messages are appended without clearing previous ones.
+- Provider in the POC: **Gemini**.
 
 Acceptance criteria:
-- [ ] Con una API key válida, al validar se cargan los modelos y se puede elegir y guardar.
-- [ ] Con una API key inválida, aparece un **modal** avisando del error.
-- [ ] Tras guardar y reabrir el navegador, la configuración sigue presente.
+- [ ] Sending a question appends the question and the answer to the chat without clearing previous messages.
+- [ ] The answer reflects transcript content (e.g. asking about what a specific person said).
+- [ ] A question can be sent during recording.
+
+### AI configuration (Settings)
+Develops `scope.md > The POC Boundary`.
+- Flow: choose Gemini → enter API key → validate → load available models → choose model → save.
+- The API key and configuration are saved in **local storage** and persist across sessions.
+
+Acceptance criteria:
+- [ ] With a valid API key, validating loads the models and you can choose and save.
+- [ ] With an invalid API key, a **modal** appears warning of the error.
+- [ ] After saving and reopening the browser, the configuration is still present.
 
 ## States and Boundaries
-- **Primer uso / sin configurar IA** — Al intentar usar el chat sin Gemini configurado, aparece un **modal/advertencia** indicando que primero hay que configurar la IA en Ajustes.
-- **Antes de grabar** — El área de transcripción muestra "La transcripción aparecerá aquí al iniciar la grabación."
-- **Fuera de Google Meet** — Al intentar grabar en una pestaña que no es Meet, se indica que la función **solo está disponible en Google Meet**.
-- **API key inválida** — Modal de error en Ajustes.
-- **Hablante indeterminado** — La línea se atribuye a "Participante Indistinguible".
-- **Persistencia** — La configuración de IA (proveedor, API key, modelo) persiste en local storage. Nada se guarda en la nube.
-- **Sub-tabs y acciones diferidas** — Tareas, Conflictos, Participación, Alertas, Resumir, Copiar, TXT, MD se muestran deshabilitadas o con "Próximamente".
+- **First use / AI not configured** — Trying to use the chat without Gemini configured shows a **modal/warning** indicating you must configure the AI in Settings first.
+- **Before recording** — The transcript area shows "The transcript will appear here once you start recording."
+- **Outside Google Meet** — Trying to record in a tab that isn't Meet indicates the feature **is only available in Google Meet**.
+- **Invalid API key** — Error modal in Settings.
+- **Undetermined speaker** — The line is attributed to "Unrecognized participant".
+- **Persistence** — The AI configuration (provider, API key, model) persists in local storage. Nothing is stored in the cloud.
+- **Deferred sub-tabs and actions** — Tasks, Conflicts, Participation, Alerts, Summarize, Copy, TXT, MD are shown disabled or with "Coming soon".
 
 ## Product Decisions
-- **Mostrar la UI completa, construir solo el núcleo** — las sub-tabs y botones diferidos aparecen deshabilitados para que la demo muestre la visión completa sin construirla.
-- **Atribución de hablante por DOM de Meet, aproximada** — es la única vía realista en una extensión; se acepta imprecisión en la PoC.
-- **"Participante Indistinguible"** como etiqueta cuando no hay nombre disponible.
-- **Chat con historial** y contexto = transcripción completa disponible, consultable durante la grabación.
-- **Config en local storage**, persistente, sin nube.
-- **Solo Google Meet y solo Gemini** en la PoC.
-- La tab **Sobre** entra en la PoC (confirmado): pantalla estática de acerca de.
+- **Show the full UI, build only the core** — the deferred sub-tabs and buttons appear disabled so the demo shows the full vision without building it.
+- **Speaker attribution via Meet DOM, approximate** — it's the only realistic path in an extension; imprecision is accepted in the POC.
+- **"Unrecognized participant"** as the label when no name is available.
+- **Chat with history** and context = full transcript available, queryable during recording.
+- **Config in local storage**, persistent, no cloud.
+- **Google Meet only and Gemini only** in the POC.
+- The **About** tab enters the POC (confirmed): static about screen.
 
 ## What We're Building
-- Tab Reunión con botón Grabar/Grabando.
-- Transcripción en vivo (ES/EN) con nombre de hablante por línea y "Participante Indistinguible" como respaldo.
-- Chat con Gemini sobre la transcripción, con historial, consultable durante la grabación.
-- Ajustes con el flujo completo de Gemini (validar key, cargar modelos, guardar), persistido en local storage.
-- Estados: sin configurar, antes de grabar, fuera de Meet, key inválida.
-- Sub-tabs y botones diferidos visibles pero deshabilitados.
+- Meeting tab with Record/Recording button.
+- Live transcription (ES/EN) with speaker name per line and "Unrecognized participant" as fallback.
+- Chat with Gemini about the transcript, with history, queryable during recording.
+- Settings with the full Gemini flow (validate key, load models, save), persisted in local storage.
+- States: not configured, before recording, outside Meet, invalid key.
+- Deferred sub-tabs and buttons visible but disabled.
 
 ## Deferred From the POC
-- Sub-tabs **Tareas**, **Conflictos**, **Participación**, **Alertas** — valiosas, pero no prueban el núcleo; se muestran deshabilitadas.
-- **Resumir**, **Copiar**, **Exportar TXT/MD** — fuera del núcleo demostrable.
-- **Historial** (buscar por título/fecha, modal al abrir, borrar con confirmación) — requiere persistir grabaciones; diferido.
-- Proveedores **OpenAI, Claude, Ollama** — solo Gemini en la PoC.
-- **Teams, Skype, Discord** — solo Meet en la PoC.
-- Tab **Sobre** — se incluye si sobra tiempo.
+- **Tasks**, **Conflicts**, **Participation**, **Alerts** sub-tabs — valuable, but they don't prove the core; shown disabled.
+- **Summarize**, **Copy**, **Export TXT/MD** — outside the demonstrable core.
+- **History** (search by title/date, modal on open, delete with confirmation) — requires persisting recordings; deferred.
+- **OpenAI, Claude, Ollama** providers — Gemini only in the POC.
+- **Teams, Skype, Discord** — Meet only in the POC.
+- **About** tab — included if there's time left.
 
 ## Possible Later Enhancements
-- Análisis en vivo (tareas, conflictos, participación, alertas por diccionario de palabras).
-- Exportación y resumen de transcripciones.
-- Historial local navegable y buscable.
-- Soporte multi-proveedor y multiplataforma de reuniones.
+- Live analysis (tasks, conflicts, participation, alerts via word dictionary).
+- Export and summary of transcripts.
+- Browsable and searchable local history.
+- Multi-provider and multi-platform meeting support.
 
 ## Non-Goals
-- No se guardan transcripciones ni datos en la nube ni en bases de datos externas.
-- No se busca atribución de hablante perfecta.
-- No se soportan otras plataformas de reunión en esta PoC.
+- No transcripts or data are stored in the cloud or in external databases.
+- Perfect speaker attribution is not pursued.
+- Other meeting platforms are not supported in this POC.
 
 ## Open Questions
-- **Motor de transcripción local y captura del audio de la pestaña** — cómo se implementa (Web Speech API, modelo local, etc.) se decide en `4-spec`. Es la restricción técnica clave que el usuario quiere resolver antes de escribir código. **Debe resolverse en `4-spec`.**
-- **Lectura del DOM de Meet para el hablante** — viabilidad concreta y selectores; se valida en `4-spec`.
-- **Inclusión de la tab Sobre** — puede decidirse durante el build.
+- **Local transcription engine and tab audio capture** — how it's implemented (Web Speech API, local model, etc.) is decided in `4-spec`. It's the key technical constraint the user wants to resolve before writing code. **Must be resolved in `4-spec`.**
+- **Reading the Meet DOM for the speaker** — concrete feasibility and selectors; validated in `4-spec`.
+- **Inclusion of the About tab** — can be decided during the build.
